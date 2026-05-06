@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1A1A1A"/>
+      <stop offset="100%" style="stop-color:#1a1200"/>
+    </linearGradient>
+    <linearGradient id="limebar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#C8F03A"/>
+      <stop offset="100%" style="stop-color:#a0d020"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1080" height="1080" fill="url(#bg)"/>
+  <ellipse cx="800" cy="300" rx="400" ry="320" fill="rgba(200,240,58,0.05)"/>
+  <ellipse cx="200" cy="800" rx="300" ry="250" fill="rgba(255,107,53,0.04)"/>
+
+  <!-- Top accent bar -->
+  <rect x="0" y="0" width="1080" height="8" fill="url(#limebar)"/>
+
+  <!-- Label -->
+  <rect x="80" y="60" width="220" height="44" rx="22" fill="rgba(200,240,58,0.12)" stroke="rgba(200,240,58,0.3)" stroke-width="1"/>
+  <text x="190" y="88" font-family="Arial, sans-serif" font-size="16" fill="#C8F03A" font-weight="600" text-anchor="middle" letter-spacing="2">FOR DRIVERS</text>
+
+  <!-- Main headline -->
+  <text x="80" y="220" font-family="Arial Black, sans-serif" font-size="86" fill="#F0F0E8" font-weight="900" letter-spacing="-3">Got a car?</text>
+  <text x="80" y="316" font-family="Arial Black, sans-serif" font-size="86" fill="#C8F03A" font-weight="900" letter-spacing="-3">Get paid</text>
+  <text x="80" y="412" font-family="Arial Black, sans-serif" font-size="86" fill="#C8F03A" font-weight="900" letter-spacing="-3">for it.</text>
+
+  <!-- Sub -->
+  <text x="80" y="490" font-family="Arial, sans-serif" font-size="27" fill="#888" font-weight="300">You're already driving to campus.</text>
+  <text x="80" y="528" font-family="Arial, sans-serif" font-size="27" fill="#888" font-weight="300">Let classmates chip in for fuel.</text>
+
+  <!-- Divider -->
+  <line x1="80" y1="570" x2="600" y2="570" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
+
+  <!-- Benefits list -->
+  <rect x="80" y="600" width="900" height="90" rx="14" fill="rgba(42,42,42,0.8)" stroke="rgba(200,240,58,0.15)" stroke-width="1"/>
+  <text x="130" y="655" font-family="Arial, sans-serif" font-size="38">✅</text>
+  <text x="195" y="658" font-family="Arial Black, sans-serif" font-size="30" fill="#F0F0E8" font-weight="700">Earn fuel contributions every ride</text>
+
+  <rect x="80" y="710" width="900" height="90" rx="14" fill="rgba(42,42,42,0.8)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="130" y="765" font-family="Arial, sans-serif" font-size="38">✅</text>
+  <text x="195" y="768" font-family="Arial Black, sans-serif" font-size="30" fill="#F0F0E8" font-weight="700">Choose who rides with you</text>
+
+  <rect x="80" y="820" width="900" height="90" rx="14" fill="rgba(42,42,42,0.8)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <text x="130" y="875" font-family="Arial, sans-serif" font-size="38">✅</text>
+  <text x="195" y="878" font-family="Arial Black, sans-serif" font-size="30" fill="#F0F0E8" font-weight="700">Free to use — zero commission</text>
+
+  <!-- CTA -->
+  <rect x="80" y="950" width="440" height="72" rx="36" fill="#C8F03A"/>
+  <text x="300" y="993" font-family="Arial Black, sans-serif" font-size="26" fill="#1A1A1A" font-weight="900" text-anchor="middle">Post your first ride →</text>
+
+  <!-- Logo -->
+  <text x="980" y="993" font-family="Arial Black, sans-serif" font-size="28" fill="rgba(200,240,58,0.3)" text-anchor="end" font-weight="900">CarFun</text>
+</svg>

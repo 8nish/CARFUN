@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f1a0f"/>
+      <stop offset="100%" style="stop-color:#1A1A1A"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="12" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <rect width="1080" height="1080" fill="url(#bg)"/>
+
+  <!-- Big lime glow in center -->
+  <ellipse cx="540" cy="480" rx="350" ry="280" fill="rgba(200,240,58,0.06)"/>
+
+  <!-- Top label -->
+  <text x="540" y="90" font-family="Arial, sans-serif" font-size="15" fill="#C8F03A" font-weight="600" text-anchor="middle" letter-spacing="3">SAVE MORE. STRESS LESS.</text>
+
+  <!-- Main number - huge -->
+  <text x="540" y="320" font-family="Arial Black, sans-serif" font-size="220" fill="#C8F03A" font-weight="900" text-anchor="middle" filter="url(#glow)" letter-spacing="-8" opacity="0.95">65</text>
+
+  <!-- AED label -->
+  <text x="200" y="260" font-family="Arial Black, sans-serif" font-size="52" fill="#C8F03A" font-weight="900" text-anchor="middle" opacity="0.7">AED</text>
+
+  <!-- per month label -->
+  <text x="860" y="330" font-family="Arial, sans-serif" font-size="32" fill="#888" text-anchor="middle">/month</text>
+  <text x="860" y="368" font-family="Arial, sans-serif" font-size="32" fill="#888" text-anchor="middle">saved</text>
+
+  <!-- Divider -->
+  <line x1="150" y1="390" x2="930" y2="390" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+  <!-- Subtitle -->
+  <text x="540" y="450" font-family="Arial Black, sans-serif" font-size="44" fill="#F0F0E8" font-weight="900" text-anchor="middle" letter-spacing="-1">Average CarFun member saving</text>
+  <text x="540" y="505" font-family="Arial, sans-serif" font-size="26" fill="#888" text-anchor="middle">Stop paying full price for your daily commute.</text>
+  <text x="540" y="540" font-family="Arial, sans-serif" font-size="26" fill="#888" text-anchor="middle">Split the ride. Keep the cash.</text>
+
+  <!-- Comparison bars -->
+  <rect x="150" y="590" width="360" height="200" rx="16" fill="rgba(255,80,80,0.08)" stroke="rgba(255,80,80,0.2)" stroke-width="1"/>
+  <text x="330" y="638" font-family="Arial, sans-serif" font-size="16" fill="#ff8080" text-anchor="middle" letter-spacing="2">WITHOUT CARFUN</text>
+  <text x="330" y="700" font-family="Arial Black, sans-serif" font-size="54" fill="#ff8080" font-weight="900" text-anchor="middle">AED 260</text>
+  <text x="330" y="748" font-family="Arial, sans-serif" font-size="20" fill="#888" text-anchor="middle">per month solo</text>
+
+  <text x="540" y="700" font-family="Arial Black, sans-serif" font-size="40" fill="#888" text-anchor="middle">→</text>
+
+  <rect x="570" y="590" width="360" height="200" rx="16" fill="rgba(200,240,58,0.08)" stroke="rgba(200,240,58,0.3)" stroke-width="1"/>
+  <text x="750" y="638" font-family="Arial, sans-serif" font-size="16" fill="#C8F03A" text-anchor="middle" letter-spacing="2">WITH CARFUN</text>
+  <text x="750" y="700" font-family="Arial Black, sans-serif" font-size="54" fill="#C8F03A" font-weight="900" text-anchor="middle">AED 195</text>
+  <text x="750" y="748" font-family="Arial, sans-serif" font-size="20" fill="#888" text-anchor="middle">per month shared</text>
+
+  <!-- CTA -->
+  <rect x="290" y="840" width="500" height="72" rx="36" fill="#C8F03A"/>
+  <text x="540" y="884" font-family="Arial Black, sans-serif" font-size="26" fill="#1A1A1A" font-weight="900" text-anchor="middle">Start saving today — it's free</text>
+
+  <!-- Logo + tag -->
+  <text x="540" y="990" font-family="Arial Black, sans-serif" font-size="24" fill="rgba(200,240,58,0.35)" text-anchor="middle" font-weight="900">CarFun</text>
+  <text x="540" y="1022" font-family="Arial, sans-serif" font-size="18" fill="rgba(255,255,255,0.15)" text-anchor="middle">#CarFun  #BathSpaRAK  #SaveMoney  #RAKStudents</text>
+</svg>

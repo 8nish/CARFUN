@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CarFun — BathSpa Academic Centre RAK Carpooling</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav id="navbar">
+    <div class="nav-inner">
+      <div class="logo">Car<span>Fun</span></div>
+      <ul class="nav-links" id="nav-links">
+        <li><a href="#" onclick="showPage('home')">Home</a></li>
+        <li><a href="#" onclick="showPage('rides')">Find Rides</a></li>
+        <li id="nav-offer" style="display:none"><a href="#" onclick="showPage('offer')">Offer Ride</a></li>
+        <li id="nav-dashboard" style="display:none"><a href="#" onclick="showPage('dashboard')">My Rides</a></li>
+        <li id="nav-messages" style="display:none"><a href="#" onclick="showPage('messages')">Messages <span id="msg-badge" class="msg-badge" style="display:none"></span></a></li>
+        <li id="nav-admin" style="display:none"><a href="#" onclick="showPage('admin')">Admin</a></li>
+      </ul>
+      <div class="nav-auth" id="nav-auth">
+        <button class="btn-ghost" onclick="showPage('login')">Login</button>
+        <button class="btn-primary" onclick="showPage('register')">Join Free</button>
+      </div>
+      <div class="nav-user" id="nav-user" style="display:none">
+        <button class="bell-btn" id="bell-btn" onclick="toggleNotifPanel()" title="Notifications">
+          🔔<span id="notif-badge" class="notif-badge" style="display:none">0</span>
+        </button>
+        <div class="user-chip" id="user-chip" onclick="showPage('profile')" style="cursor:pointer">
+          <div class="chip-avatar" id="chip-avatar">?</div>
+          <span id="chip-name">User</span>
+        </div>
+        <button class="btn-ghost" onclick="logout()">Logout</button>
+      </div>
+      <!-- Notification panel -->
+      <div id="notif-panel" class="notif-panel" style="display:none">
+        <div class="notif-panel-head"><span>Notifications</span><button onclick="clearNotifs()">Clear</button></div>
+        <div id="notif-list"><div class="notif-empty">No notifications yet</div></div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- PAGES -->
+  <main id="app">
+
+    <!-- ── HOME ──────────────────────────────────────────────────────────── -->
+    <div id="page-home" class="page active">
+      <section class="hero">
+        <div class="hero-content">
+          <div class="hero-badge">BathSpa Academic Centre RAK</div>
+          <h1>Share rides,<br><span class="hl">share costs.</span></h1>
+          <p class="hero-sub">CarFun matches BathSpa RAK commuters for affordable, eco-friendly carpooling — based on where you live and your class timetable.</p>
+          <div class="hero-btns">
+            <button class="btn-primary btn-lg" onclick="showPage('register')">Get Started — it's free</button>
+            <button class="btn-secondary btn-lg" onclick="showPage('rides')">Browse rides</button>
+          </div>
+          <div class="hero-stats">
+            <div class="stat"><div class="stat-n" id="stat-users">—</div><div class="stat-l">Active members</div></div>
+            <div class="stat"><div class="stat-n">AED 65</div><div class="stat-l">Avg. monthly saving</div></div>
+            <div class="stat"><div class="stat-n">4.8★</div><div class="stat-l">Average rating</div></div>
+          </div>
+        </div>
+        <div class="hero-card">
+          <div class="map-card">
+            <div class="map-head"><span>Live routes today</span><div class="live-pill">Live</div></div>
+            <div class="fake-map">
+              <div class="road road-h" style="top:50%"></div>
+              <div class="road road-h" style="top:28%"></div>
+              <div class="road road-h" style="top:72%"></div>
+              <div class="road road-v" style="left:28%"></div>
+              <div class="road road-v" style="left:62%"></div>
+              <div class="road road-v" style="left:82%"></div>
+              <div class="mpin" style="top:18%;left:6%"><div class="pdot green"></div><div class="plabel">Al Nakheel</div></div>
+              <div class="mpin" style="top:13%;left:44%"><div class="pdot lime"></div><div class="plabel">Al Hamra</div></div>
+              <div class="mpin" style="top:54%;left:66%"><div class="pdot lime"></div><div class="plabel">BSA RAK</div></div>
+              <div class="mpin" style="top:36%;left:20%"><div class="pdot orange"></div><div class="plabel">Khuzam</div></div>
+              <div class="route-svg"><svg width="100%" height="100%" style="position:absolute;top:0;left:0"><line x1="10%" y1="22%" x2="68%" y2="57%" stroke="#C8F03A" stroke-width="2" stroke-dasharray="6 4" opacity="0.7"/><line x1="22%" y1="40%" x2="68%" y2="57%" stroke="#FF6B35" stroke-width="2" stroke-dasharray="6 4" opacity="0.5"/></svg></div>
+              <div class="car-anim">🚗</div>
+            </div>
+            <div class="rider-list" id="hero-riders">
+              <div class="rider-row"><div class="rider-l"><div class="av av-lime">JA</div><div><div class="rname">Jamie A.</div><div class="rloc">Al Nakheel → Campus</div></div></div><span class="rbadge driver">Driver</span></div>
+              <div class="rider-row"><div class="rider-l"><div class="av av-blue">SR</div><div><div class="rname">Sasha R.</div><div class="rloc">Khuzam → Campus</div></div></div><span class="rbadge passenger">Passenger</span></div>
+              <div class="rider-row"><div class="rider-l"><div class="av av-orange">MK</div><div><div class="rname">Mo K.</div><div class="rloc">Al Hamra → Campus</div></div></div><span class="rbadge driver">Driver</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="how-section">
+        <div class="section-wrap">
+          <div class="section-label">How it works</div>
+          <h2>Up and running in minutes</h2>
+          <div class="steps-grid">
+            <div class="step-card"><div class="step-n">01</div><div class="step-ico">🎓</div><div class="step-t">Create a free account</div><p>Sign up with your Gmail or any email and set up your profile in seconds.</p></div>
+            <div class="step-card"><div class="step-n">02</div><div class="step-ico">📍</div><div class="step-t">Enter your area</div><p>Tell us where you live in RAK and we match you with nearby commuters.</p></div>
+            <div class="step-card"><div class="step-n">03</div><div class="step-ico">📅</div><div class="step-t">Add your schedule</div><p>Set your commute days and preferred travel times to match your timetable.</p></div>
+            <div class="step-card"><div class="step-n">04</div><div class="step-ico">🚗</div><div class="step-t">Match and go!</div><p>Get matched with drivers or passengers heading to BathSpa Academic Centre RAK.</p></div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ── RIDES ──────────────────────────────────────────────────────────── -->
+    <div id="page-rides" class="page">
+      <div class="section-wrap" style="padding-top:3rem">
+        <div class="rides-top">
+          <div><div class="section-label">Available now</div><h2>Find a ride</h2></div>
+          <div class="filters">
+            <select id="filter-area" onchange="loadRides()">
+              <option value="">All areas</option>
+              <option>Al Nakheel</option><option>Al Hamra</option><option>Al Mairid</option>
+              <option>Khuzam</option><option>Al Qusaidat</option><option>Al Rams</option>
+              <option>Digdaga</option><option>Julfar</option><option>Al Marjan Island</option><option>Wadi Shah</option>
+            </select>
+            <input type="date" id="filter-date" onchange="loadRides()" />
+            <button class="btn-ghost" onclick="clearFilters()">Clear</button>
+          </div>
+        </div>
+        <div id="rides-grid" class="rides-grid">
+          <div class="loading-state">Loading rides…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── OFFER RIDE ─────────────────────────────────────────────────────── -->
+    <div id="page-offer" class="page">
+      <div class="section-wrap form-page">
+        <div class="section-label">Drivers</div>
+        <h2>Offer a ride</h2>
+        <p class="section-sub">Share your journey to campus and split the costs.</p>
+        <form class="card-form" id="offer-form" onsubmit="submitOffer(event)">
+          <div class="form-grid">
+            <div class="fg"><label>From (your area)</label><select name="fromArea" required>
+              <option value="">Select area</option>
+              <option>Al Nakheel</option><option>Al Hamra</option><option>Al Mairid</option>
+              <option>Khuzam</option><option>Al Qusaidat</option><option>Al Rams</option>
+              <option>Digdaga</option><option>Julfar</option><option>Al Marjan Island</option><option>Wadi Shah</option>
+            </select></div>
+            <div class="fg"><label>Specific pickup address (optional)</label><input type="text" name="fromAddress" placeholder="e.g. Al Hamra Village, Building 3" /></div>
+            <div class="fg"><label>Date</label><input type="date" name="date" required /></div>
+            <div class="fg"><label>Departure time</label><input type="time" name="departureTime" value="08:00" required /></div>
+            <div class="fg"><label>Return time (optional)</label><input type="time" name="returnTime" /></div>
+            <div class="fg"><label>Seats available</label><input type="number" name="seatsTotal" min="1" max="7" value="2" required /></div>
+            <div class="fg"><label>Cost contribution per person (AED)</label><input type="number" name="costContribution" min="0" step="1" value="0" placeholder="0 = free" /></div>
+            <div class="fg full"><label>Notes (optional)</label><textarea name="notes" rows="2" placeholder="e.g. No smoking, can pick up from nearby…"></textarea></div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary">Post Ride →</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── DASHBOARD ──────────────────────────────────────────────────────── -->
+    <div id="page-dashboard" class="page">
+      <div class="section-wrap" style="padding-top:3rem">
+        <h2>My Rides</h2>
+        <div class="dash-tabs">
+          <button class="dash-tab active" onclick="switchDashTab('driving', this)">As Driver</button>
+          <button class="dash-tab" onclick="switchDashTab('passenger', this)">As Passenger</button>
+        </div>
+        <div id="dash-driving"><div class="loading-state">Loading…</div></div>
+        <div id="dash-passenger" style="display:none"><div class="loading-state">Loading…</div></div>
+      </div>
+    </div>
+
+    <!-- ── REGISTER ───────────────────────────────────────────────────────── -->
+    <div id="page-register" class="page">
+      <div class="section-wrap form-page">
+        <div class="section-label">Join CarFun</div>
+        <h2>Create your account</h2>
+
+        <div class="role-picker">
+          <div class="role-opt active" id="role-driver" onclick="pickRole('driver')">
+            <div class="role-ico">🚗</div>
+            <div class="role-t">Driver</div>
+            <div class="role-d">Offer seats &amp; earn fuel contributions</div>
+          </div>
+          <div class="role-opt" id="role-passenger" onclick="pickRole('passenger')">
+            <div class="role-ico">🎒</div>
+            <div class="role-t">Passenger</div>
+            <div class="role-d">Find rides matched to your schedule</div>
+          </div>
+        </div>
+
+        <form class="card-form" id="register-form" onsubmit="submitRegister(event)">
+          <div class="form-grid">
+            <div class="fg"><label>First Name</label><input type="text" name="firstName" placeholder="Jamie" required /></div>
+            <div class="fg"><label>Last Name</label><input type="text" name="lastName" placeholder="Anderson" required /></div>
+            <div class="fg"><label>Email</label><input type="email" name="email" placeholder="yourname@gmail.com" required /></div>
+            <div class="fg"><label>Password (min 6 chars)</label><input type="password" name="password" minlength="6" required /></div>
+            <div class="fg full"><label>Confirm Password</label><input type="password" name="confirmPassword" required /></div>
+            <div class="fg full"><label>Where do you live in RAK?</label><select name="area" required>
+              <option value="">Select your area</option>
+              <option>Al Nakheel</option><option>Al Hamra</option><option>Al Mairid</option>
+              <option>Khuzam</option><option>Al Qusaidat</option><option>Al Rams</option>
+              <option>Digdaga</option><option>Julfar</option><option>Al Marjan Island</option>
+              <option>Wadi Shah</option><option>Other (RAK area)</option>
+            </select></div>
+            <div class="fg full" id="car-fields" style="display:none">
+              <div class="form-grid" style="padding:0">
+                <div class="fg"><label>Car Registration</label><input type="text" name="carRegistration" placeholder="e.g. RAK 12345" /></div>
+                <div class="fg"><label>Car Model</label><input type="text" name="carModel" placeholder="e.g. Toyota Camry" /></div>
+                <div class="fg"><label>Seats available (excl. driver)</label><input type="number" name="seatsAvailable" min="1" max="7" value="2" /></div>
+              </div>
+            </div>
+            <div class="fg full">
+              <label>Which days do you commute?</label>
+              <div class="days-row">
+                <button type="button" class="day-btn" onclick="toggleDay(this)">Mon</button>
+                <button type="button" class="day-btn" onclick="toggleDay(this)">Tue</button>
+                <button type="button" class="day-btn" onclick="toggleDay(this)">Wed</button>
+                <button type="button" class="day-btn" onclick="toggleDay(this)">Thu</button>
+                <button type="button" class="day-btn" onclick="toggleDay(this)">Fri</button>
+              </div>
+            </div>
+            <div class="fg"><label>Earliest departure</label><input type="time" name="departureTime" value="08:00" /></div>
+            <div class="fg"><label>Latest return</label><input type="time" name="returnTime" value="18:00" /></div>
+          </div>
+          <div id="form-error" class="form-error" style="display:none"></div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="reg-btn">Create Profile →</button>
+            <span class="form-link">Already have an account? <a href="#" onclick="showPage('login')">Login</a></span>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ── PROFILE ──────────────────────────────────────────────────────────── -->
+    <div id="page-profile" class="page">
+      <div class="section-wrap form-page" style="padding-top:3rem">
+        <div class="section-label">Account</div>
+        <h2>My Profile</h2>
+        <div class="profile-card">
+          <div class="profile-photo-wrap">
+            <div class="profile-photo-ring" id="profile-photo-ring">
+              <div class="profile-photo-av" id="profile-photo-av">?</div>
+            </div>
+            <label class="btn-ghost profile-upload-btn">
+              Change Photo
+              <input type="file" accept="image/*" style="display:none" onchange="handlePhotoSelect(this)" />
+            </label>
+          </div>
+          <div class="profile-info" id="profile-info"><div class="loading-state">Loading…</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── MESSAGES ─────────────────────────────────────────────────────────── -->
+    <div id="page-messages" class="page">
+      <div class="section-wrap" style="padding-top:3rem">
+        <div class="section-label">Accepted rides</div>
+        <h2>Messages</h2>
+        <div class="chat-layout">
+          <div class="chat-sidebar" id="chat-sidebar">
+            <div id="convo-list"><div class="loading-state">Loading…</div></div>
+          </div>
+          <div class="chat-main" id="chat-main">
+            <div class="chat-empty-state">
+              <div class="big">💬</div>
+              <p>Select a conversation to start chatting</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ADMIN ──────────────────────────────────────────────────────────── -->
+    <div id="page-admin" class="page">
+      <div class="section-wrap" style="padding-top:3rem">
+        <div class="section-label">Administration</div>
+        <h2>User Management</h2>
+        <div class="admin-stats" id="admin-stats">
+          <div class="admin-stat-card"><div class="asc-n" id="asc-total">—</div><div class="asc-l">Total Users</div></div>
+          <div class="admin-stat-card"><div class="asc-n" id="asc-drivers">—</div><div class="asc-l">Drivers</div></div>
+          <div class="admin-stat-card"><div class="asc-n" id="asc-passengers">—</div><div class="asc-l">Passengers</div></div>
+        </div>
+        <div class="admin-toolbar">
+          <input type="text" id="admin-search" placeholder="Search by name or email…" oninput="filterAdminUsers()" />
+          <select id="admin-filter-role" onchange="filterAdminUsers()">
+            <option value="">All roles</option>
+            <option value="driver">Drivers</option>
+            <option value="passenger">Passengers</option>
+          </select>
+        </div>
+        <div id="admin-users-list"><div class="loading-state">Loading users…</div></div>
+      </div>
+    </div>
+
+    <!-- ── LOGIN ──────────────────────────────────────────────────────────── -->
+    <div id="page-login" class="page">
+      <div class="section-wrap form-page narrow">
+        <div class="section-label">Welcome back</div>
+        <h2>Login</h2>
+        <form class="card-form" id="login-form" onsubmit="submitLogin(event)">
+          <div class="form-grid">
+            <div class="fg full"><label>Email</label><input type="email" name="email" placeholder="yourname@gmail.com" required /></div>
+            <div class="fg full"><label>Password</label><input type="password" name="password" required /></div>
+          </div>
+          <div id="login-error" class="form-error" style="display:none"></div>
+          <div class="form-actions">
+            <button type="submit" class="btn-primary" id="login-btn">Login →</button>
+            <span class="form-link">New here? <a href="#" onclick="showPage('register')">Create an account</a></span>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-logo">CarFun</div>
+      <div class="footer-copy">Made for BathSpa Academic Centre RAK · Share the ride, share the cost.</div>
+    </div>
+  </footer>
+
+  <!-- ── MAP MODAL ────────────────────────────────────────────────────────── -->
+  <div id="map-modal" class="map-overlay" style="display:none" onclick="handleMapOverlayClick(event)">
+    <div class="map-modal-box">
+      <div class="map-modal-header">
+        <div>
+          <div id="map-modal-title" class="map-modal-title">Set Pickup Location</div>
+          <div id="map-modal-sub" class="map-modal-sub">Click on the map to drop your pin</div>
+        </div>
+        <button class="map-modal-close" onclick="closeMapModal()">✕</button>
+      </div>
+      <div id="map-container"></div>
+      <div id="map-modal-footer" class="map-modal-footer">
+        <span id="map-coords" class="map-coords">No pin placed yet</span>
+        <button id="map-save-btn" class="btn-primary" onclick="savePickupLocation()" disabled>Save Location</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

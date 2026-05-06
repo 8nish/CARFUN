@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1A1A1A"/>
+      <stop offset="100%" style="stop-color:#0f1a1a"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1080" height="1080" fill="url(#bg)"/>
+  <ellipse cx="540" cy="540" rx="500" ry="400" fill="rgba(74,144,217,0.04)"/>
+
+  <!-- Top -->
+  <text x="540" y="80" font-family="Arial, sans-serif" font-size="15" fill="#C8F03A" font-weight="600" text-anchor="middle" letter-spacing="3">YOUR COMMUNITY</text>
+  <text x="540" y="160" font-family="Arial Black, sans-serif" font-size="68" fill="#F0F0E8" font-weight="900" text-anchor="middle" letter-spacing="-2">BathSpa RAK students</text>
+  <text x="540" y="238" font-family="Arial Black, sans-serif" font-size="68" fill="#C8F03A" font-weight="900" text-anchor="middle" letter-spacing="-2">already on CarFun</text>
+
+  <!-- Rider cards row 1 -->
+  <!-- Card 1 -->
+  <rect x="80" y="300" width="280" height="160" rx="16" fill="rgba(42,42,42,0.95)" stroke="rgba(200,240,58,0.2)" stroke-width="1"/>
+  <circle cx="140" cy="358" r="32" fill="rgba(200,240,58,0.15)" stroke="rgba(200,240,58,0.4)" stroke-width="1.5"/>
+  <text x="140" y="368" font-family="Arial Black, sans-serif" font-size="20" fill="#C8F03A" text-anchor="middle" font-weight="700">JA</text>
+  <text x="190" y="346" font-family="Arial Black, sans-serif" font-size="22" fill="#F0F0E8" font-weight="700">Jamie A.</text>
+  <text x="190" y="372" font-family="Arial, sans-serif" font-size="16" fill="#888">Al Nakheel</text>
+  <rect x="100" y="405" width="80" height="28" rx="14" fill="rgba(200,240,58,0.12)" stroke="rgba(200,240,58,0.3)" stroke-width="1"/>
+  <text x="140" y="424" font-family="Arial, sans-serif" font-size="14" fill="#C8F03A" text-anchor="middle" font-weight="600">Driver</text>
+  <text x="260" y="424" font-family="Arial, sans-serif" font-size="16" fill="#FFC107">★ 4.9</text>
+
+  <!-- Card 2 -->
+  <rect x="400" y="300" width="280" height="160" rx="16" fill="rgba(42,42,42,0.95)" stroke="rgba(74,144,217,0.2)" stroke-width="1"/>
+  <circle cx="460" cy="358" r="32" fill="rgba(74,144,217,0.15)" stroke="rgba(74,144,217,0.4)" stroke-width="1.5"/>
+  <text x="460" y="368" font-family="Arial Black, sans-serif" font-size="20" fill="#7ab8f5" text-anchor="middle" font-weight="700">SR</text>
+  <text x="510" y="346" font-family="Arial Black, sans-serif" font-size="22" fill="#F0F0E8" font-weight="700">Sasha R.</text>
+  <text x="510" y="372" font-family="Arial, sans-serif" font-size="16" fill="#888">Khuzam</text>
+  <rect x="420" y="405" width="110" height="28" rx="14" fill="rgba(74,144,217,0.12)" stroke="rgba(74,144,217,0.3)" stroke-width="1"/>
+  <text x="475" y="424" font-family="Arial, sans-serif" font-size="14" fill="#7ab8f5" text-anchor="middle" font-weight="600">Passenger</text>
+  <text x="580" y="424" font-family="Arial, sans-serif" font-size="16" fill="#FFC107">★ 5.0</text>
+
+  <!-- Card 3 -->
+  <rect x="720" y="300" width="280" height="160" rx="16" fill="rgba(42,42,42,0.95)" stroke="rgba(255,107,53,0.2)" stroke-width="1"/>
+  <circle cx="780" cy="358" r="32" fill="rgba(255,107,53,0.15)" stroke="rgba(255,107,53,0.4)" stroke-width="1.5"/>
+  <text x="780" y="368" font-family="Arial Black, sans-serif" font-size="20" fill="#ff9a74" text-anchor="middle" font-weight="700">MK</text>
+  <text x="830" y="346" font-family="Arial Black, sans-serif" font-size="22" fill="#F0F0E8" font-weight="700">Mo K.</text>
+  <text x="830" y="372" font-family="Arial, sans-serif" font-size="16" fill="#888">Al Hamra</text>
+  <rect x="740" y="405" width="80" height="28" rx="14" fill="rgba(200,240,58,0.12)" stroke="rgba(200,240,58,0.3)" stroke-width="1"/>
+  <text x="780" y="424" font-family="Arial, sans-serif" font-size="14" fill="#C8F03A" text-anchor="middle" font-weight="600">Driver</text>
+  <text x="864" y="424" font-family="Arial, sans-serif" font-size="16" fill="#FFC107">★ 4.8</text>
+
+  <!-- Testimonial card -->
+  <rect x="80" y="510" width="920" height="180" rx="18" fill="rgba(42,42,42,0.95)" stroke="rgba(200,240,58,0.15)" stroke-width="1"/>
+  <text x="130" y="575" font-family="Arial, sans-serif" font-size="52" fill="rgba(200,240,58,0.4)">"</text>
+  <text x="180" y="575" font-family="Arial, sans-serif" font-size="26" fill="#F0F0E8" font-style="italic">CarFun matched me with two classmates from Al Nakheel.</text>
+  <text x="180" y="611" font-family="Arial, sans-serif" font-size="26" fill="#F0F0E8" font-style="italic">We carpool every week and I've saved so much already.</text>
+  <text x="180" y="655" font-family="Arial, sans-serif" font-size="20" fill="#888">— Year 2 Business student, BathSpa RAK</text>
+
+  <!-- Testimonial 2 -->
+  <rect x="80" y="720" width="440" height="170" rx="18" fill="rgba(42,42,42,0.95)" stroke="rgba(74,144,217,0.15)" stroke-width="1"/>
+  <text x="130" y="778" font-family="Arial, sans-serif" font-size="40" fill="rgba(74,144,217,0.4)">"</text>
+  <text x="170" y="778" font-family="Arial, sans-serif" font-size="22" fill="#F0F0E8" font-style="italic">As a driver, I cover my fuel costs</text>
+  <text x="170" y="808" font-family="Arial, sans-serif" font-size="22" fill="#F0F0E8" font-style="italic">completely. It's a no-brainer.</text>
+  <text x="170" y="858" font-family="Arial, sans-serif" font-size="17" fill="#888">— Final year student, driver</text>
+
+  <!-- Join CTA card -->
+  <rect x="560" y="720" width="440" height="170" rx="18" fill="#C8F03A"/>
+  <text x="780" y="788" font-family="Arial Black, sans-serif" font-size="34" fill="#1A1A1A" font-weight="900" text-anchor="middle">Join 340+ students</text>
+  <text x="780" y="828" font-family="Arial Black, sans-serif" font-size="34" fill="#1A1A1A" font-weight="900" text-anchor="middle">already on CarFun</text>
+  <text x="780" y="866" font-family="Arial, sans-serif" font-size="22" fill="rgba(26,26,26,0.6)" text-anchor="middle">Sign up free today →</text>
+
+  <!-- Logo -->
+  <text x="540" y="1048" font-family="Arial Black, sans-serif" font-size="22" fill="rgba(200,240,58,0.25)" text-anchor="middle" font-weight="900">CarFun · BathSpa Academic Centre RAK</text>
+</svg>
