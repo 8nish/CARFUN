@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
-const UserSchema = new mongoose.Schema(
+const USERschema = new mongoose.Schema(
   {
-    // ── Identity ─────────────────────────────────────────────────────────────
+    // basic identity stuff
     firstName: {
       type: String,
       required: [true, 'First name is required'],
@@ -41,14 +41,14 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
 
-    // ── Role ──────────────────────────────────────────────────────────────────
+    // driver, passenger, or both
     role: {
       type: String,
       enum: ['driver', 'passenger', 'both'],
       default: 'passenger',
     },
 
-    // ── Location ──────────────────────────────────────────────────────────────
+    // roughly where they live
     area: {
       type: String,
       required: [true, 'Area is required'],
@@ -67,14 +67,14 @@ const UserSchema = new mongoose.Schema(
       ],
     },
 
-    // ── Schedule ──────────────────────────────────────────────────────────────
+    // what days they commute
     commuteDays: {
       type: [String],
       enum: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
       default: [],
     },
     departureTime: {
-      type: String, // "HH:MM" format
+      type: String, // "HH:MM"
       default: '08:00',
     },
     returnTime: {
@@ -82,7 +82,7 @@ const UserSchema = new mongoose.Schema(
       default: '18:00',
     },
 
-    // ── Driver-specific ───────────────────────────────────────────────────────
+    // driver-only fields — dhovie validate these are filled if role is 'driver' or 'both' -Danish
     carRegistration: {
       type: String,
       trim: true,
@@ -101,7 +101,7 @@ const UserSchema = new mongoose.Schema(
       default: null,
     },
 
-    // ── Reputation ────────────────────────────────────────────────────────────
+    // rating out of 5
     rating: {
       type: Number,
       default: 0,
@@ -113,7 +113,7 @@ const UserSchema = new mongoose.Schema(
       default: 0,
     },
 
-    // ── Status ────────────────────────────────────────────────────────────────
+    // account status flags
     isAdmin: {
       type: Boolean,
       default: false,
@@ -132,52 +132,52 @@ const UserSchema = new mongoose.Schema(
     },
   },
   {
-    timestamps: true, // adds createdAt and updatedAt
+    timestamps: true, // adds createdAt and updatedAt automatically
   }
 );
 
-// ── Indexes ───────────────────────────────────────────────────────────────────
-UserSchema.index({ area: 1, role: 1 });
-UserSchema.index({ commuteDays: 1 });
+// indexes we actually use
+USERschema.index({ area: 1, role: 1 });
+USERschema.index({ commuteDays: 1 });
 
-// ── Virtual: full name ─────────────────────────────────────────────────────
-UserSchema.virtual('fullName').get(function () {
+// puts first and last name together, used a lot in the frontend
+USERschema.virtual('fullName').get(function () {
   return `${this.firstName} ${this.lastName}`;
 });
 
-// ── Virtual: initials (for avatar) ────────────────────────────────────────
-UserSchema.virtual('initials').get(function () {
+// for the avatar placeholder when there's no profile pic
+USERschema.virtual('initials').get(function () {
   return `${this.firstName[0]}${this.lastName[0]}`.toUpperCase();
 });
 
-// ── Hash password before save ─────────────────────────────────────────────
-UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  const salt = await bcrypt.genSalt(12);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
+// hash the password before saving — only runs if the password actually changed
+USERschema.pre('save', async function (NEXT) {
+  if (!this.isModified('password')) return NEXT();
+  const SALT = await bcrypt.genSalt(12);
+  this.password = await bcrypt.hash(this.password, SALT);
+  NEXT();
 });
 
-// ── Instance method: compare password ────────────────────────────────────
-UserSchema.methods.comparePassword = async function (candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+// checks a plain text password against the stored hash
+USERschema.methods.comparePassword = async function (CANDIDATEpassword) {
+  return bcrypt.compare(CANDIDATEpassword, this.password);
 };
 
-// ── Instance method: update rating ────────────────────────────────────────
-UserSchema.methods.addRating = function (newRating) {
-  const total = this.rating * this.ratingCount + newRating;
+// running average — updates the rating when a new one comes in
+USERschema.methods.addRating = function (NEWrating) {
+  const TOTAL = this.rating * this.ratingCount + NEWrating;
   this.ratingCount += 1;
-  this.rating = +(total / this.ratingCount).toFixed(1);
+  this.rating = +(TOTAL / this.ratingCount).toFixed(1);
 };
 
-// ── Remove sensitive fields from JSON output ──────────────────────────────
-UserSchema.set('toJSON', {
+// strip password and __v before sending anything to the client
+USERschema.set('toJSON', {
   virtuals: true,
-  transform: (doc, ret) => {
-    delete ret.password;
-    delete ret.__v;
-    return ret;
+  transform: (DOC, RET) => {
+    delete RET.password;
+    delete RET.__v;
+    return RET;
   },
 });
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.model('User', USERschema);

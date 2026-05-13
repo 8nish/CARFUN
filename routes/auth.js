@@ -1,122 +1,117 @@
 const express = require('express');
-const router = express.Router();
+const ROUTER = express.Router();
 const User = require('../models/User');
-const { protect, signToken } = require('../middleware/auth');
+const { PROTECT, SIGNtoken } = require('../middleware/auth');
 
-// ── POST /api/auth/register ───────────────────────────────────────────────
-// Create a new student account
-router.post('/register', async (req, res) => {
+// POST /api/auth/register — create a new student account
+ROUTER.post('/register', async (REQ, RES) => {
   try {
     const {
-      firstName,
-      lastName,
-      email,
-      password,
-      role,
-      area,
-      commuteDays,
-      departureTime,
-      returnTime,
-      carRegistration,
-      carModel,
-      seatsAvailable,
-    } = req.body;
+      firstName: FIRSTname,
+      lastName: LASTname,
+      email: EMAIL,
+      password: PASSWORD,
+      role: ROLE,
+      area: AREA,
+      commuteDays: COMMUTEdays,
+      departureTime: DEPARTUREtime,
+      returnTime: RETURNtime,
+      carRegistration: CARregistration,
+      carModel: CARmodel,
+      seatsAvailable: SEATSavailable,
+    } = REQ.body;
 
-    // Check for existing email
-    const existing = await User.findOne({ email: email.toLowerCase() });
-    if (existing) {
-      return res.status(400).json({ message: 'An account with this email already exists' });
+    // bail early if that email's already taken
+    const EXISTINGuser = await User.findOne({ email: EMAIL.toLowerCase() });
+    if (EXISTINGuser) {
+      return RES.status(400).json({ message: 'An account with this email already exists' });
     }
 
-    // Build user object
-    const ADMIN_EMAIL = 'th.car.fun@gmail.com';
+    const ADMIN_EMAILS = ['th.car.fun@gmail.com', 'admin@carfun.com'];
 
-    const userData = {
-      firstName,
-      lastName,
-      email,
-      password,
-      role: role || 'passenger',
-      isAdmin: email.toLowerCase() === ADMIN_EMAIL,
-      area,
-      commuteDays: commuteDays || [],
-      departureTime: departureTime || '08:00',
-      returnTime: returnTime || '18:00',
+    const USERdata = {
+      firstName: FIRSTname,
+      lastName: LASTname,
+      email: EMAIL,
+      password: PASSWORD,
+      role: ROLE || 'passenger',
+      isAdmin: ADMIN_EMAILS.includes(EMAIL.toLowerCase()),
+      area: AREA,
+      commuteDays: COMMUTEdays || [],
+      departureTime: DEPARTUREtime || '08:00',
+      returnTime: RETURNtime || '18:00',
     };
 
-    // Driver-specific fields
-    if (role === 'driver' || role === 'both') {
-      userData.carRegistration = carRegistration;
-      userData.carModel = carModel;
-      userData.seatsAvailable = seatsAvailable;
+    // only add car stuff if they're a driver
+    if (ROLE === 'driver' || ROLE === 'both') {
+      USERdata.carRegistration = CARregistration;
+      USERdata.carModel = CARmodel;
+      USERdata.seatsAvailable = SEATSavailable;
     }
 
-    const user = await User.create(userData);
-    const token = signToken(user._id);
+    const USER = await User.create(USERdata);
+    const TOKEN = SIGNtoken(USER._id);
 
-    res.status(201).json({
+    RES.status(201).json({
       message: 'Account created successfully',
-      token,
-      user,
+      token: TOKEN,
+      user: USER,
     });
-  } catch (err) {
-    // Mongoose validation errors
-    if (err.name === 'ValidationError') {
-      const messages = Object.values(err.errors).map((e) => e.message);
-      return res.status(400).json({ message: messages[0], errors: messages });
+  } catch (ERR) {
+    // mongoose spits out a ValidationError when fields fail schema rules
+    if (ERR.name === 'ValidationError') {
+      const MESSAGES = Object.values(ERR.errors).map((E) => E.message);
+      return RES.status(400).json({ message: MESSAGES[0], errors: MESSAGES });
     }
-    console.error('Register error:', err);
-    res.status(500).json({ message: 'Server error during registration' });
+    console.error('Register error:', ERR);
+    RES.status(500).json({ message: 'Server error during registration' });
   }
 });
 
-// ── POST /api/auth/login ──────────────────────────────────────────────────
-// Login with email + password
-router.post('/login', async (req, res) => {
+// POST /api/auth/login — login with email + password
+ROUTER.post('/login', async (REQ, RES) => {
   try {
-    const { email, password } = req.body;
+    const { email: EMAIL, password: PASSWORD } = REQ.body;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Email and password are required' });
+    if (!EMAIL || !PASSWORD) {
+      return RES.status(400).json({ message: 'Email and password are required' });
     }
 
-    // Include password field for comparison
-    const user = await User.findOne({ email: email.toLowerCase() }).select('+password');
+    // need to explicitly select password since it's excluded by default
+    const USER = await User.findOne({ email: EMAIL.toLowerCase() }).select('+password');
 
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ message: 'Invalid email or password' });
+    if (!USER || !(await USER.comparePassword(PASSWORD))) {
+      return RES.status(401).json({ message: 'Invalid email or password' });
     }
 
-    if (!user.isActive) {
-      return res.status(401).json({ message: 'Your account has been deactivated' });
+    if (!USER.isActive) {
+      return RES.status(401).json({ message: 'Your account has been deactivated' });
     }
 
-    const token = signToken(user._id);
+    const TOKEN = SIGNtoken(USER._id);
 
-    // Remove password from response
-    user.password = undefined;
+    // strip password before sending back
+    USER.password = undefined;
 
-    res.json({
+    RES.json({
       message: 'Login successful',
-      token,
-      user,
+      token: TOKEN,
+      user: USER,
     });
-  } catch (err) {
-    console.error('Login error:', err);
-    res.status(500).json({ message: 'Server error during login' });
+  } catch (ERR) {
+    console.error('Login error:', ERR);
+    RES.status(500).json({ message: 'Server error during login' });
   }
 });
 
-// ── GET /api/auth/me ──────────────────────────────────────────────────────
-// Get current logged-in user's profile
-router.get('/me', protect, (req, res) => {
-  res.json({ user: req.user });
+// GET /api/auth/me — get the currently logged-in user's profile
+ROUTER.get('/me', PROTECT, (REQ, RES) => {
+  RES.json({ user: REQ.user });
 });
 
-// ── POST /api/auth/logout ─────────────────────────────────────────────────
-// Client-side logout (just confirms — JWT is stateless)
-router.post('/logout', protect, (req, res) => {
-  res.json({ message: 'Logged out successfully' });
+// POST /api/auth/logout — JWT is stateless so this just confirms on the server side
+ROUTER.post('/logout', PROTECT, (REQ, RES) => {
+  RES.json({ message: 'Logged out successfully' });
 });
 
-module.exports = router;
+module.exports = ROUTER;

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
-const RideRequestSchema = new mongoose.Schema({
+// schema for a single ride request from a passenger
+const RIDErequestschema = new mongoose.Schema({
   passenger: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -26,16 +27,16 @@ const RideRequestSchema = new mongoose.Schema({
   },
 });
 
-const RideSchema = new mongoose.Schema(
+const RIDEschema = new mongoose.Schema(
   {
-    // ── Driver ────────────────────────────────────────────────────────────────
+    // who's driving
     driver: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'Driver is required'],
     },
 
-    // ── Route ─────────────────────────────────────────────────────────────────
+    // where from and where to
     fromArea: {
       type: String,
       required: [true, 'Pickup area is required'],
@@ -50,7 +51,7 @@ const RideSchema = new mongoose.Schema(
       default: 'BathSpa Academic Centre, RAK',
     },
 
-    // ── Timing ────────────────────────────────────────────────────────────────
+    // timing stuff
     departureTime: {
       type: String, // "HH:MM"
       required: [true, 'Departure time is required'],
@@ -73,7 +74,7 @@ const RideSchema = new mongoose.Schema(
       default: [],
     },
 
-    // ── Seats ─────────────────────────────────────────────────────────────────
+    // seat counts
     seatsTotal: {
       type: Number,
       required: true,
@@ -85,24 +86,24 @@ const RideSchema = new mongoose.Schema(
       default: 0,
     },
 
-    // ── Pricing ───────────────────────────────────────────────────────────────
+    // cost per passenger in £
     costContribution: {
-      type: Number, // £ per passenger
+      type: Number,
       default: 0,
       min: 0,
     },
 
-    // ── Requests ──────────────────────────────────────────────────────────────
-    requests: [RideRequestSchema],
+    // all the requests for this ride
+    requests: [RIDErequestschema],
 
-    // ── Status ────────────────────────────────────────────────────────────────
+    // ride status — dhovie make sure cancelled rides don't show up in search results -Danish
     status: {
       type: String,
       enum: ['active', 'full', 'cancelled', 'completed'],
       default: 'active',
     },
 
-    // ── Notes ─────────────────────────────────────────────────────────────────
+    // optional notes from the driver
     notes: {
       type: String,
       maxlength: 300,
@@ -114,38 +115,38 @@ const RideSchema = new mongoose.Schema(
   }
 );
 
-// ── Indexes ───────────────────────────────────────────────────────────────────
-RideSchema.index({ date: 1, status: 1 });
-RideSchema.index({ fromArea: 1, date: 1 });
-RideSchema.index({ driver: 1 });
+// indexes for the queries we run the most
+RIDEschema.index({ date: 1, status: 1 });
+RIDEschema.index({ fromArea: 1, date: 1 });
+RIDEschema.index({ driver: 1 });
 
-// ── Virtual: seats remaining ──────────────────────────────────────────────
-RideSchema.virtual('seatsRemaining').get(function () {
+// how many seats are still open
+RIDEschema.virtual('seatsRemaining').get(function () {
   return this.seatsTotal - this.seatsBooked;
 });
 
-// ── Virtual: is full ─────────────────────────────────────────────────────
-RideSchema.virtual('isFull').get(function () {
+// quick boolean for checking if the ride is full
+RIDEschema.virtual('isFull').get(function () {
   return this.seatsBooked >= this.seatsTotal;
 });
 
-// ── Pre-save: auto-update status when full ────────────────────────────────
-RideSchema.pre('save', function (next) {
+// auto-flips the status between active and full based on seat count
+RIDEschema.pre('save', function (NEXT) {
   if (this.seatsBooked >= this.seatsTotal && this.status === 'active') {
     this.status = 'full';
   }
   if (this.seatsBooked < this.seatsTotal && this.status === 'full') {
     this.status = 'active';
   }
-  next();
+  NEXT();
 });
 
-RideSchema.set('toJSON', {
+RIDEschema.set('toJSON', {
   virtuals: true,
-  transform: (doc, ret) => {
-    delete ret.__v;
-    return ret;
+  transform: (DOC, RET) => {
+    delete RET.__v;
+    return RET;
   },
 });
 
-module.exports = mongoose.model('Ride', RideSchema);
+module.exports = mongoose.model('Ride', RIDEschema);

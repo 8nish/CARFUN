@@ -1,315 +1,309 @@
 const express = require('express');
-const router = express.Router();
+const ROUTER = express.Router();
 const Ride = require('../models/Ride');
 const User = require('../models/User');
 const Conversation = require('../models/Conversation');
-const { protect, optionalAuth, driverOnly } = require('../middleware/auth');
+const { PROTECT, OPTIONALauth, DRIVERonly } = require('../middleware/auth');
 const { sendEvent } = require('../utils/sse');
 
-// ── GET /api/rides ─────────────────────────────────────────────────────────
-// List available rides with optional filters
-router.get('/', optionalAuth, async (req, res) => {
+// GET /api/rides — list available rides with optional filters
+// dhovie bump the limit if we get more users, 50 might not be enough -Danish
+ROUTER.get('/', OPTIONALauth, async (REQ, RES) => {
   try {
-    const { area, date, time, minSeats, status } = req.query;
+    const { area: AREA, date: DATE, time: TIME, minSeats: MINseats, status: STATUS } = REQ.query;
 
-    const filter = {
-      status: status || 'active',
+    const FILTER = {
+      status: STATUS || 'active',
       date: { $gte: new Date() }, // only upcoming rides
     };
 
-    if (area) filter.fromArea = area;
-    if (minSeats) filter.seatsBooked = { $lte: filter.seatsTotal - parseInt(minSeats) };
+    if (AREA) FILTER.fromArea = AREA;
+    if (MINseats) FILTER.seatsBooked = { $lte: FILTER.seatsTotal - parseInt(MINseats) };
 
-    if (date) {
-      const d = new Date(date);
-      const next = new Date(d);
-      next.setDate(d.getDate() + 1);
-      filter.date = { $gte: d, $lt: next };
+    if (DATE) {
+      const D = new Date(DATE);
+      const NEXT = new Date(D);
+      NEXT.setDate(D.getDate() + 1);
+      FILTER.date = { $gte: D, $lt: NEXT };
     }
 
-    const rides = await Ride.find(filter)
+    const RIDES = await Ride.find(FILTER)
       .populate('driver', 'firstName lastName area rating ratingCount carModel seatsAvailable profilePicture')
       .sort({ date: 1, departureTime: 1 })
       .limit(50);
 
-    res.json({ rides, count: rides.length });
-  } catch (err) {
-    console.error('Get rides error:', err);
-    res.status(500).json({ message: 'Failed to fetch rides' });
+    RES.json({ rides: RIDES, count: RIDES.length });
+  } catch (ERR) {
+    console.error('Get rides error:', ERR);
+    RES.status(500).json({ message: 'Failed to fetch rides' });
   }
 });
 
-// ── GET /api/rides/:id ────────────────────────────────────────────────────
-// Get a single ride by ID
-router.get('/:id', optionalAuth, async (req, res) => {
+// GET /api/rides/:id — get a single ride by ID
+ROUTER.get('/:id', OPTIONALauth, async (REQ, RES) => {
   try {
-    const ride = await Ride.findById(req.params.id)
+    const RIDE = await Ride.findById(REQ.params.id)
       .populate('driver', 'firstName lastName area rating ratingCount carModel carRegistration')
       .populate('requests.passenger', 'firstName lastName area');
 
-    if (!ride) return res.status(404).json({ message: 'Ride not found' });
+    if (!RIDE) return RES.status(404).json({ message: 'Ride not found' });
 
-    res.json({ ride });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch ride' });
+    RES.json({ ride: RIDE });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to fetch ride' });
   }
 });
 
-// ── POST /api/rides ───────────────────────────────────────────────────────
-// Create a new ride offer (drivers only)
-router.post('/', protect, driverOnly, async (req, res) => {
+// POST /api/rides — create a new ride offer (drivers only)
+ROUTER.post('/', PROTECT, DRIVERonly, async (REQ, RES) => {
   try {
     const {
-      fromArea,
-      fromAddress,
-      departureTime,
-      returnTime,
-      date,
-      recurring,
-      recurringDays,
-      seatsTotal,
-      costContribution,
-      notes,
-    } = req.body;
+      fromArea: FROMarea,
+      fromAddress: FROMaddress,
+      departureTime: DEPARTUREtime,
+      returnTime: RETURNtime,
+      date: DATE,
+      recurring: RECURRING,
+      recurringDays: RECURRINGdays,
+      seatsTotal: SEATStotal,
+      costContribution: COSTcontribution,
+      notes: NOTES,
+    } = REQ.body;
 
-    const ride = await Ride.create({
-      driver: req.user._id,
-      fromArea: fromArea || req.user.area,
-      fromAddress,
-      departureTime,
-      returnTime,
-      date: new Date(date),
-      recurring: recurring || false,
-      recurringDays: recurringDays || [],
-      seatsTotal,
-      costContribution: costContribution || 0,
-      notes,
+    const RIDE = await Ride.create({
+      driver: REQ.user._id,
+      fromArea: FROMarea || REQ.user.area,
+      fromAddress: FROMaddress,
+      departureTime: DEPARTUREtime,
+      returnTime: RETURNtime,
+      date: new Date(DATE),
+      recurring: RECURRING || false,
+      recurringDays: RECURRINGdays || [],
+      seatsTotal: SEATStotal,
+      costContribution: COSTcontribution || 0,
+      notes: NOTES,
     });
 
-    await ride.populate('driver', 'firstName lastName area rating carModel');
+    await RIDE.populate('driver', 'firstName lastName area rating carModel');
 
-    res.status(201).json({ message: 'Ride created successfully', ride });
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      const messages = Object.values(err.errors).map((e) => e.message);
-      return res.status(400).json({ message: messages[0] });
+    RES.status(201).json({ message: 'Ride created successfully', ride: RIDE });
+  } catch (ERR) {
+    if (ERR.name === 'ValidationError') {
+      const MESSAGES = Object.values(ERR.errors).map((E) => E.message);
+      return RES.status(400).json({ message: MESSAGES[0] });
     }
-    console.error('Create ride error:', err);
-    res.status(500).json({ message: 'Failed to create ride' });
+    console.error('Create ride error:', ERR);
+    RES.status(500).json({ message: 'Failed to create ride' });
   }
 });
 
-// ── PUT /api/rides/:id ────────────────────────────────────────────────────
-// Update a ride (driver who created it only)
-router.put('/:id', protect, async (req, res) => {
+// PUT /api/rides/:id — update a ride (only the driver who created it)
+ROUTER.put('/:id', PROTECT, async (REQ, RES) => {
   try {
-    const ride = await Ride.findById(req.params.id);
-    if (!ride) return res.status(404).json({ message: 'Ride not found' });
+    const RIDE = await Ride.findById(REQ.params.id);
+    if (!RIDE) return RES.status(404).json({ message: 'Ride not found' });
 
-    if (ride.driver.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'You can only edit your own rides' });
+    if (RIDE.driver.toString() !== REQ.user._id.toString()) {
+      return RES.status(403).json({ message: 'You can only edit your own rides' });
     }
 
-    const allowedUpdates = [
+    const ALLOWEDupdates = [
       'departureTime', 'returnTime', 'date', 'seatsTotal',
       'costContribution', 'notes', 'status', 'fromAddress',
     ];
 
-    allowedUpdates.forEach((field) => {
-      if (req.body[field] !== undefined) ride[field] = req.body[field];
+    ALLOWEDupdates.forEach((FIELD) => {
+      if (REQ.body[FIELD] !== undefined) RIDE[FIELD] = REQ.body[FIELD];
     });
 
-    await ride.save();
+    await RIDE.save();
 
-    // Notify accepted passengers when ride is marked completed
-    if (req.body.status === 'completed') {
-      const accepted = ride.requests.filter(r => r.status === 'accepted');
-      const rideInfo = {
-        rideId: ride._id,
-        fromArea: ride.fromArea,
-        date: ride.date,
-        departureTime: ride.departureTime,
-        driverId: ride.driver.toString(),
-        driverName: `${req.user.firstName} ${req.user.lastName}`,
+    // notify accepted passengers when the ride gets marked completed
+    if (REQ.body.status === 'completed') {
+      const ACCEPTED = RIDE.requests.filter(R => R.status === 'accepted');
+      const RIDEinfo = {
+        rideId: RIDE._id,
+        fromArea: RIDE.fromArea,
+        date: RIDE.date,
+        departureTime: RIDE.departureTime,
+        driverId: RIDE.driver.toString(),
+        driverName: `${REQ.user.firstName} ${REQ.user.lastName}`,
       };
-      accepted.forEach(r => sendEvent(r.passenger.toString(), 'ride-completed', rideInfo));
+      ACCEPTED.forEach(R => sendEvent(R.passenger.toString(), 'ride-completed', RIDEinfo));
     }
 
-    res.json({ message: 'Ride updated', ride });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to update ride' });
+    RES.json({ message: 'Ride updated', ride: RIDE });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to update ride' });
   }
 });
 
-// ── DELETE /api/rides/:id ─────────────────────────────────────────────────
-// Cancel/delete a ride
-router.delete('/:id', protect, async (req, res) => {
+// DELETE /api/rides/:id — cancel a ride
+ROUTER.delete('/:id', PROTECT, async (REQ, RES) => {
   try {
-    const ride = await Ride.findById(req.params.id);
-    if (!ride) return res.status(404).json({ message: 'Ride not found' });
+    const RIDE = await Ride.findById(REQ.params.id);
+    if (!RIDE) return RES.status(404).json({ message: 'Ride not found' });
 
-    if (ride.driver.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'You can only cancel your own rides' });
+    if (RIDE.driver.toString() !== REQ.user._id.toString()) {
+      return RES.status(403).json({ message: 'You can only cancel your own rides' });
     }
 
-    ride.status = 'cancelled';
-    await ride.save();
+    RIDE.status = 'cancelled';
+    await RIDE.save();
 
-    res.json({ message: 'Ride cancelled successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to cancel ride' });
+    RES.json({ message: 'Ride cancelled successfully' });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to cancel ride' });
   }
 });
 
-// ── POST /api/rides/:id/request ───────────────────────────────────────────
-// Passenger requests a seat on a ride
-router.post('/:id/request', protect, async (req, res) => {
+// POST /api/rides/:id/request — passenger requests a seat
+ROUTER.post('/:id/request', PROTECT, async (REQ, RES) => {
   try {
-    const ride = await Ride.findById(req.params.id);
-    if (!ride) return res.status(404).json({ message: 'Ride not found' });
+    const RIDE = await Ride.findById(REQ.params.id);
+    if (!RIDE) return RES.status(404).json({ message: 'Ride not found' });
 
-    if (ride.status !== 'active') {
-      return res.status(400).json({ message: 'This ride is no longer available' });
+    if (RIDE.status !== 'active') {
+      return RES.status(400).json({ message: 'This ride is no longer available' });
     }
 
-    if (ride.driver.toString() === req.user._id.toString()) {
-      return res.status(400).json({ message: 'You cannot request your own ride' });
+    if (RIDE.driver.toString() === REQ.user._id.toString()) {
+      return RES.status(400).json({ message: 'You cannot request your own ride' });
     }
 
-    // Check if already requested
-    const alreadyRequested = ride.requests.some(
-      (r) => r.passenger.toString() === req.user._id.toString()
+    // don't let them request the same ride twice
+    const ALREADYrequested = RIDE.requests.some(
+      (R) => R.passenger.toString() === REQ.user._id.toString()
     );
-    if (alreadyRequested) {
-      return res.status(400).json({ message: 'You have already requested this ride' });
+    if (ALREADYrequested) {
+      return RES.status(400).json({ message: 'You have already requested this ride' });
     }
 
-    ride.requests.push({
-      passenger: req.user._id,
-      message: req.body.message || '',
+    RIDE.requests.push({
+      passenger: REQ.user._id,
+      message: REQ.body.message || '',
     });
 
-    await ride.save();
-    res.json({ message: 'Ride request sent successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to send request' });
+    await RIDE.save();
+    RES.json({ message: 'Ride request sent successfully' });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to send request' });
   }
 });
 
-// ── DELETE /api/rides/:id/request/:requestId ─────────────────────────────
-// Passenger cancels their own pending request
-router.delete('/:id/request/:requestId', protect, async (req, res) => {
+// DELETE /api/rides/:id/request/:requestId — passenger cancels their pending request
+ROUTER.delete('/:id/request/:requestId', PROTECT, async (REQ, RES) => {
   try {
-    const ride = await Ride.findById(req.params.id);
-    if (!ride) return res.status(404).json({ message: 'Ride not found' });
+    const RIDE = await Ride.findById(REQ.params.id);
+    if (!RIDE) return RES.status(404).json({ message: 'Ride not found' });
 
-    const request = ride.requests.id(req.params.requestId);
-    if (!request) return res.status(404).json({ message: 'Request not found' });
+    const REQUEST = RIDE.requests.id(REQ.params.requestId);
+    if (!REQUEST) return RES.status(404).json({ message: 'Request not found' });
 
-    if (request.passenger.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'You can only cancel your own requests' });
+    if (REQUEST.passenger.toString() !== REQ.user._id.toString()) {
+      return RES.status(403).json({ message: 'You can only cancel your own requests' });
     }
-    if (request.status !== 'pending') {
-      return res.status(400).json({ message: `Cannot cancel a ${request.status} request` });
+    if (REQUEST.status !== 'pending') {
+      return RES.status(400).json({ message: `Cannot cancel a ${REQUEST.status} request` });
     }
 
-    request.status = 'cancelled';
-    await ride.save();
-    res.json({ message: 'Request cancelled' });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to cancel request' });
+    REQUEST.status = 'cancelled';
+    await RIDE.save();
+    RES.json({ message: 'Request cancelled' });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to cancel request' });
   }
 });
 
-// ── PUT /api/rides/:id/request/:requestId ─────────────────────────────────
-// Driver accepts or rejects a ride request
-router.put('/:id/request/:requestId', protect, async (req, res) => {
+// PUT /api/rides/:id/request/:requestId — driver accepts or rejects a request
+ROUTER.put('/:id/request/:requestId', PROTECT, async (REQ, RES) => {
   try {
-    const ride = await Ride.findById(req.params.id);
-    if (!ride) return res.status(404).json({ message: 'Ride not found' });
+    const RIDE = await Ride.findById(REQ.params.id);
+    if (!RIDE) return RES.status(404).json({ message: 'Ride not found' });
 
-    if (ride.driver.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Only the driver can manage requests' });
+    if (RIDE.driver.toString() !== REQ.user._id.toString()) {
+      return RES.status(403).json({ message: 'Only the driver can manage requests' });
     }
 
-    const request = ride.requests.id(req.params.requestId);
-    if (!request) return res.status(404).json({ message: 'Request not found' });
+    const REQUEST = RIDE.requests.id(REQ.params.requestId);
+    if (!REQUEST) return RES.status(404).json({ message: 'Request not found' });
 
-    const { status } = req.body; // 'accepted' or 'rejected'
-    if (!['accepted', 'rejected'].includes(status)) {
-      return res.status(400).json({ message: 'Status must be accepted or rejected' });
+    const { status: STATUS } = REQ.body; // 'accepted' or 'rejected'
+    if (!['accepted', 'rejected'].includes(STATUS)) {
+      return RES.status(400).json({ message: 'Status must be accepted or rejected' });
     }
 
-    if (status === 'accepted') {
-      if (ride.isFull) {
-        return res.status(400).json({ message: 'Ride is already full' });
+    if (STATUS === 'accepted') {
+      if (RIDE.isFull) {
+        return RES.status(400).json({ message: 'Ride is already full' });
       }
-      ride.seatsBooked += 1;
+      RIDE.seatsBooked += 1;
     }
 
-    request.status = status;
-    await ride.save();
+    REQUEST.status = STATUS;
+    await RIDE.save();
 
-    const passengerId = request.passenger.toString();
+    const PASSENGERid = REQUEST.passenger.toString();
 
-    if (status === 'accepted') {
-      const convo = await Conversation.findOneAndUpdate(
-        { ride: ride._id, passenger: request.passenger },
-        { $setOnInsert: { ride: ride._id, driver: ride.driver, passenger: request.passenger } },
+    if (STATUS === 'accepted') {
+      // create the conversation between driver and passenger if it doesn't exist yet
+      const CONVO = await Conversation.findOneAndUpdate(
+        { ride: RIDE._id, passenger: REQUEST.passenger },
+        { $setOnInsert: { ride: RIDE._id, driver: RIDE.driver, passenger: REQUEST.passenger } },
         { upsert: true, new: true }
       );
-      sendEvent(passengerId, 'ride-accepted', {
-        rideId: ride._id,
-        convoId: convo._id,
+      sendEvent(PASSENGERid, 'ride-accepted', {
+        rideId: RIDE._id,
+        convoId: CONVO._id,
         message: 'Your ride request was accepted!',
       });
-      sendEvent(ride.driver.toString(), 'conversation-created', { convoId: convo._id });
+      sendEvent(RIDE.driver.toString(), 'conversation-created', { convoId: CONVO._id });
     } else {
-      sendEvent(passengerId, 'ride-rejected', {
-        rideId: ride._id,
+      sendEvent(PASSENGERid, 'ride-rejected', {
+        rideId: RIDE._id,
         message: 'Your ride request was declined.',
       });
     }
 
-    res.json({ message: `Request ${status}`, ride });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to update request' });
+    RES.json({ message: `Request ${STATUS}`, ride: RIDE });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to update request' });
   }
 });
 
-// ── PUT /api/rides/:id/request/:requestId/location ────────────────────────
-// Passenger saves their pickup pin — only the driver of that ride can read it
-router.put('/:id/request/:requestId/location', protect, async (req, res) => {
+// PUT /api/rides/:id/request/:requestId/location — passenger saves their pickup pin
+ROUTER.put('/:id/request/:requestId/location', PROTECT, async (REQ, RES) => {
   try {
-    const { lat, lng } = req.body;
-    if (lat == null || lng == null) {
-      return res.status(400).json({ message: 'lat and lng are required' });
+    const { lat: LAT, lng: LNG } = REQ.body;
+    if (LAT == null || LNG == null) {
+      return RES.status(400).json({ message: 'lat and lng are required' });
     }
 
-    const ride = await Ride.findById(req.params.id);
-    if (!ride) return res.status(404).json({ message: 'Ride not found' });
+    const RIDE = await Ride.findById(REQ.params.id);
+    if (!RIDE) return RES.status(404).json({ message: 'Ride not found' });
 
-    const request = ride.requests.id(req.params.requestId);
-    if (!request) return res.status(404).json({ message: 'Request not found' });
+    const REQUEST = RIDE.requests.id(REQ.params.requestId);
+    if (!REQUEST) return RES.status(404).json({ message: 'Request not found' });
 
-    if (request.passenger.toString() !== req.user._id.toString()) {
-      return res.status(403).json({ message: 'Only the passenger can set their pickup location' });
+    if (REQUEST.passenger.toString() !== REQ.user._id.toString()) {
+      return RES.status(403).json({ message: 'Only the passenger can set their pickup location' });
     }
 
-    request.pickupLocation = { lat, lng };
-    await ride.save();
+    REQUEST.pickupLocation = { lat: LAT, lng: LNG };
+    await RIDE.save();
 
-    sendEvent(ride.driver.toString(), 'pickup-pin-updated', {
-      rideId: ride._id,
-      passengerName: `${req.user.firstName} ${req.user.lastName}`,
-      lat,
-      lng,
+    // let the driver know the passenger has dropped a pin
+    sendEvent(RIDE.driver.toString(), 'pickup-pin-updated', {
+      rideId: RIDE._id,
+      passengerName: `${REQ.user.firstName} ${REQ.user.lastName}`,
+      lat: LAT,
+      lng: LNG,
     });
 
-    res.json({ message: 'Pickup location saved' });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to save location' });
+    RES.json({ message: 'Pickup location saved' });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to save location' });
   }
 });
 
-module.exports = router;
+module.exports = ROUTER;

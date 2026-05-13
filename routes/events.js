@@ -1,41 +1,42 @@
 const express = require('express');
-const router = express.Router();
+const ROUTER = express.Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { addClient, removeClient } = require('../utils/sse');
 
 // GET /api/events?token=<jwt>
-// EventSource doesn't support custom headers so we accept token via query param
-router.get('/', async (req, res) => {
-  const token = req.query.token;
-  if (!token) return res.status(401).end();
+// EventSource doesn't support custom headers so we take the token via query param instead
+ROUTER.get('/', async (REQ, RES) => {
+  const TOKEN = REQ.query.token;
+  if (!TOKEN) return RES.status(401).end();
 
-  let user;
+  let USER;
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    user = await User.findById(decoded.id).select('_id isActive');
-    if (!user || !user.isActive) return res.status(401).end();
+    const DECODED = jwt.verify(TOKEN, process.env.JWT_SECRET);
+    USER = await User.findById(DECODED.id).select('_id isActive');
+    if (!USER || !USER.isActive) return RES.status(401).end();
   } catch {
-    return res.status(401).end();
+    return RES.status(401).end();
   }
 
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.flushHeaders();
+  // set up the SSE headers and flush so the connection stays open
+  RES.setHeader('Content-Type', 'text/event-stream');
+  RES.setHeader('Cache-Control', 'no-cache');
+  RES.setHeader('Connection', 'keep-alive');
+  RES.flushHeaders();
 
-  res.write('event: connected\ndata: {}\n\n');
+  RES.write('event: connected\ndata: {}\n\n');
 
-  const userId = user._id.toString();
-  addClient(userId, res);
+  const USERid = USER._id.toString();
+  addClient(USERid, RES);
 
-  // Keep-alive ping every 25s to prevent proxy timeouts
-  const ping = setInterval(() => res.write(': ping\n\n'), 25000);
+  // ping every 25s so proxies don't kill the connection
+  const PING = setInterval(() => RES.write(': ping\n\n'), 25000);
 
-  req.on('close', () => {
-    clearInterval(ping);
-    removeClient(userId, res);
+  REQ.on('close', () => {
+    clearInterval(PING);
+    removeClient(USERid, RES);
   });
 });
 
-module.exports = router;
+module.exports = ROUTER;

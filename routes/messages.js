@@ -1,78 +1,78 @@
 const express = require('express');
-const router = express.Router();
+const ROUTER = express.Router();
 const Conversation = require('../models/Conversation');
-const { protect } = require('../middleware/auth');
+const { PROTECT } = require('../middleware/auth');
 const { sendEvent } = require('../utils/sse');
 
-// ── GET /api/messages ─────────────────────────────────────────────────────
-// All conversations for the current user
-router.get('/', protect, async (req, res) => {
+// GET /api/messages — all conversations for the current user
+ROUTER.get('/', PROTECT, async (REQ, RES) => {
   try {
-    const uid = req.user._id;
-    const convos = await Conversation.find({ $or: [{ driver: uid }, { passenger: uid }] })
+    const UID = REQ.user._id;
+    const CONVOS = await Conversation.find({ $or: [{ driver: UID }, { passenger: UID }] })
       .populate('ride', 'fromArea date departureTime')
       .populate('driver', 'firstName lastName')
       .populate('passenger', 'firstName lastName')
       .sort({ lastMessageAt: -1 });
 
-    res.json({ conversations: convos });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch conversations' });
+    RES.json({ conversations: CONVOS });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to fetch conversations' });
   }
 });
 
-// ── GET /api/messages/:id ─────────────────────────────────────────────────
-// Single conversation with all messages
-router.get('/:id', protect, async (req, res) => {
+// GET /api/messages/:id — single conversation with all its messages
+ROUTER.get('/:id', PROTECT, async (REQ, RES) => {
   try {
-    const convo = await Conversation.findById(req.params.id)
+    const CONVO = await Conversation.findById(REQ.params.id)
       .populate('ride', 'fromArea date departureTime')
       .populate('driver', 'firstName lastName')
       .populate('passenger', 'firstName lastName');
 
-    if (!convo) return res.status(404).json({ message: 'Conversation not found' });
+    if (!CONVO) return RES.status(404).json({ message: 'Conversation not found' });
 
-    const uid = req.user._id.toString();
-    if (convo.driver._id.toString() !== uid && convo.passenger._id.toString() !== uid) {
-      return res.status(403).json({ message: 'Not authorised' });
+    // make sure the person requesting is actually in this conversation
+    const UID = REQ.user._id.toString();
+    if (CONVO.driver._id.toString() !== UID && CONVO.passenger._id.toString() !== UID) {
+      return RES.status(403).json({ message: 'Not authorised' });
     }
 
-    res.json({ conversation: convo });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch conversation' });
+    RES.json({ conversation: CONVO });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to fetch conversation' });
   }
 });
 
-// ── POST /api/messages/:id ────────────────────────────────────────────────
-// Send a message in a conversation
-router.post('/:id', protect, async (req, res) => {
+// POST /api/messages/:id — send a message in a conversation
+ROUTER.post('/:id', PROTECT, async (REQ, RES) => {
   try {
-    const { text } = req.body;
-    if (!text?.trim()) return res.status(400).json({ message: 'Message cannot be empty' });
+    const { text: TEXT } = REQ.body;
+    if (!TEXT?.trim()) return RES.status(400).json({ message: 'Message cannot be empty' });
 
-    const convo = await Conversation.findById(req.params.id);
-    if (!convo) return res.status(404).json({ message: 'Conversation not found' });
+    const CONVO = await Conversation.findById(REQ.params.id);
+    if (!CONVO) return RES.status(404).json({ message: 'Conversation not found' });
 
-    const uid = req.user._id.toString();
-    if (convo.driver.toString() !== uid && convo.passenger.toString() !== uid) {
-      return res.status(403).json({ message: 'Not authorised' });
+    // verify they're part of this convo before letting them send
+    const UID = REQ.user._id.toString();
+    if (CONVO.driver.toString() !== UID && CONVO.passenger.toString() !== UID) {
+      return RES.status(403).json({ message: 'Not authorised' });
     }
 
-    convo.messages.push({ sender: req.user._id, text: text.trim() });
-    convo.lastMessageAt = new Date();
-    await convo.save();
+    CONVO.messages.push({ sender: REQ.user._id, text: TEXT.trim() });
+    CONVO.lastMessageAt = new Date();
+    await CONVO.save();
 
-    const newMsg = convo.messages[convo.messages.length - 1];
+    const NEWmsg = CONVO.messages[CONVO.messages.length - 1];
 
-    const recipientId = convo.driver.toString() === req.user._id.toString()
-      ? convo.passenger.toString()
-      : convo.driver.toString();
-    sendEvent(recipientId, 'new-message', { convoId: convo._id.toString() });
+    // notify the other person in the convo
+    const RECIPIENTid = CONVO.driver.toString() === REQ.user._id.toString()
+      ? CONVO.passenger.toString()
+      : CONVO.driver.toString();
+    sendEvent(RECIPIENTid, 'new-message', { convoId: CONVO._id.toString() });
 
-    res.json({ message: newMsg });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to send message' });
+    RES.json({ message: NEWmsg });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to send message' });
   }
 });
 
-module.exports = router;
+module.exports = ROUTER;

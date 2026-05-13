@@ -1,268 +1,270 @@
-// ── Config ────────────────────────────────────────────────────────────────
+// base URL for all API calls
 const API = '/api';
 
-// ── State ─────────────────────────────────────────────────────────────────
-let currentUser = null;
-let selectedRole = 'driver';
+// keep track of who's logged in and what role they picked on the register form
+let CURRENTuser = null;
+let SELECTEDrole = 'driver';
 
-// ── JWT helpers ───────────────────────────────────────────────────────────
-const getToken = () => localStorage.getItem('carfun_token');
-const setToken = (t) => localStorage.setItem('carfun_token', t);
-const clearToken = () => localStorage.removeItem('carfun_token');
+// JWT token helpers — stored in localStorage
+const GETtoken = () => localStorage.getItem('carfun_token');
+const SETtoken = (T) => localStorage.setItem('carfun_token', T);
+const CLEARtoken = () => localStorage.removeItem('carfun_token');
 
-const authHeaders = () => ({
+const AUTHheaders = () => ({
   'Content-Type': 'application/json',
-  ...(getToken() ? { Authorization: `Bearer ${getToken()}` } : {}),
+  ...(GETtoken() ? { Authorization: `Bearer ${GETtoken()}` } : {}),
 });
 
-// ── API helper ────────────────────────────────────────────────────────────
-async function apiFetch(path, options = {}) {
-  const res = await fetch(`${API}${path}`, {
-    headers: authHeaders(),
-    ...options,
+// wrapper around fetch — throws if the server returns an error
+async function APIFetch(PATH, OPTIONS = {}) {
+  const RES = await fetch(`${API}${PATH}`, {
+    headers: AUTHheaders(),
+    ...OPTIONS,
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Request failed');
-  return data;
+  const DATA = await RES.json();
+  if (!RES.ok) throw new Error(DATA.message || 'Request failed');
+  return DATA;
 }
 
-// ── Page navigation ───────────────────────────────────────────────────────
-function showPage(name) {
-  document.querySelectorAll('.page').forEach((p) => p.classList.remove('active'));
-  const target = document.getElementById(`page-${name}`);
-  if (target) target.classList.add('active');
+// switches between pages and triggers any data loading that page needs
+function SHOWpage(NAME) {
+  document.querySelectorAll('.page').forEach((P) => P.classList.remove('active'));
+  const TARGET = document.getElementById(`page-${NAME}`);
+  if (TARGET) TARGET.classList.add('active');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  if (name === 'rides') loadRides();
-  if (name === 'dashboard') loadDashboard();
-  if (name === 'messages') {
-    const badge = document.getElementById('msg-badge');
-    if (badge) badge.style.display = 'none';
-    loadMessages();
+  if (NAME === 'rides') LOADrides();
+  if (NAME === 'dashboard') LOADdashboard();
+  if (NAME === 'messages') {
+    const BADGE = document.getElementById('msg-badge');
+    if (BADGE) BADGE.style.display = 'none';
+    LOADmessages();
   }
-  if (name === 'admin') loadAdmin();
-  if (name === 'offer' && !currentUser) { showPage('login'); return; }
-  if (name === 'dashboard' && !currentUser) { showPage('login'); return; }
-  if (name === 'messages' && !currentUser) { showPage('login'); return; }
-  if (name === 'admin' && (!currentUser || !currentUser.isAdmin)) { showPage('home'); return; }
+  if (NAME === 'admin') LOADadmin();
+  if (NAME === 'offer' && !CURRENTuser) { SHOWpage('login'); return; }
+  if (NAME === 'dashboard' && !CURRENTuser) { SHOWpage('login'); return; }
+  if (NAME === 'messages' && !CURRENTuser) { SHOWpage('login'); return; }
+  if (NAME === 'admin' && (!CURRENTuser || !CURRENTuser.isAdmin)) { SHOWpage('home'); return; }
 }
 
-// ── Toast ─────────────────────────────────────────────────────────────────
-let toastTimer;
-function showToast(msg, isError = false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = `toast show${isError ? ' error' : ''}`;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove('show'), 3500);
+// toast notification — red for errors, normal for success
+let TOASTtimer;
+function SHOWtoast(MSG, ISERRor = false) {
+  const T = document.getElementById('toast');
+  T.textContent = MSG;
+  T.className = `toast show${ISERRor ? ' error' : ''}`;
+  clearTimeout(TOASTtimer);
+  TOASTtimer = setTimeout(() => T.classList.remove('show'), 3500);
 }
 
-// ── Auth UI ───────────────────────────────────────────────────────────────
-function updateNav() {
-  const authEl = document.getElementById('nav-auth');
-  const userEl = document.getElementById('nav-user');
-  const offerNav = document.getElementById('nav-offer');
-  const dashNav = document.getElementById('nav-dashboard');
-  const msgsNav = document.getElementById('nav-messages');
-  const adminNav = document.getElementById('nav-admin');
+// updates the nav depending on whether someone is logged in or not
+function UPDATEnav() {
+  const AUTHel = document.getElementById('nav-auth');
+  const USERel = document.getElementById('nav-user');
+  const OFFERnav = document.getElementById('nav-offer');
+  const DASHnav = document.getElementById('nav-dashboard');
+  const MSGSnav = document.getElementById('nav-messages');
+  const ADMINnav = document.getElementById('nav-admin');
 
-  if (currentUser) {
-    authEl.style.display = 'none';
-    userEl.style.display = 'flex';
+  if (CURRENTuser) {
+    AUTHel.style.display = 'none';
+    USERel.style.display = 'flex';
     document.getElementById('chip-avatar').textContent =
-      `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase();
-    document.getElementById('chip-name').textContent = currentUser.firstName;
+      `${CURRENTuser.firstName[0]}${CURRENTuser.lastName[0]}`.toUpperCase();
+    document.getElementById('chip-name').textContent = CURRENTuser.firstName;
 
-    if (currentUser.role === 'driver' || currentUser.role === 'both') {
-      offerNav.style.display = '';
+    if (CURRENTuser.role === 'driver' || CURRENTuser.role === 'both') {
+      OFFERnav.style.display = '';
     }
-    dashNav.style.display = '';
-    msgsNav.style.display = '';
-    adminNav.style.display = currentUser.isAdmin ? '' : 'none';
+    DASHnav.style.display = '';
+    MSGSnav.style.display = '';
+    ADMINnav.style.display = CURRENTuser.isAdmin ? '' : 'none';
 
-    fetchUserCount();
+    FETCHusercount();
   } else {
-    authEl.style.display = 'flex';
-    userEl.style.display = 'none';
-    offerNav.style.display = 'none';
-    dashNav.style.display = 'none';
-    msgsNav.style.display = 'none';
-    adminNav.style.display = 'none';
+    AUTHel.style.display = 'flex';
+    USERel.style.display = 'none';
+    OFFERnav.style.display = 'none';
+    DASHnav.style.display = 'none';
+    MSGSnav.style.display = 'none';
+    ADMINnav.style.display = 'none';
   }
 }
 
-async function fetchUserCount() {
+async function FETCHusercount() {
   try {
-    // Using the health endpoint as a proxy; in production you'd add a /stats route
-    const el = document.getElementById('stat-users');
-    if (el) el.textContent = '340+';
+    // dhovie swap this out for a real /stats endpoint when you get a chance -Danish
+    const EL = document.getElementById('stat-users');
+    if (EL) EL.textContent = '340+';
   } catch (_) {}
 }
 
-// ── Login ─────────────────────────────────────────────────────────────────
-async function submitLogin(e) {
-  e.preventDefault();
-  const btn = document.getElementById('login-btn');
-  const errEl = document.getElementById('login-error');
-  const form = e.target;
+// handles the login form submit
+async function SUBMITlogin(E) {
+  E.preventDefault();
+  const BTN = document.getElementById('login-btn');
+  const ERRel = document.getElementById('login-error');
+  const FORM = E.target;
 
-  btn.textContent = 'Logging in…';
-  btn.disabled = true;
-  errEl.style.display = 'none';
+  BTN.textContent = 'Logging in…';
+  BTN.disabled = true;
+  ERRel.style.display = 'none';
 
   try {
-    const data = await apiFetch('/auth/login', {
+    const DATA = await APIFetch('/auth/login', {
       method: 'POST',
       body: JSON.stringify({
-        email: form.email.value,
-        password: form.password.value,
+        email: FORM.email.value,
+        password: FORM.password.value,
       }),
     });
 
-    setToken(data.token);
-    currentUser = data.user;
-    updateNav();
-    connectSSE();
-    showToast(`Welcome back, ${currentUser.firstName}!`);
-    showPage('rides');
-    form.reset();
-  } catch (err) {
-    errEl.textContent = err.message;
-    errEl.style.display = 'block';
+    SETtoken(DATA.token);
+    CURRENTuser = DATA.user;
+    UPDATEnav();
+    CONNECTsse();
+    SHOWtoast(`Welcome back, ${CURRENTuser.firstName}!`);
+    SHOWpage('rides');
+    FORM.reset();
+  } catch (ERR) {
+    ERRel.textContent = ERR.message;
+    ERRel.style.display = 'block';
   } finally {
-    btn.textContent = 'Login →';
-    btn.disabled = false;
+    BTN.textContent = 'Login →';
+    BTN.disabled = false;
   }
 }
 
-// ── Register ──────────────────────────────────────────────────────────────
-function pickRole(role) {
-  selectedRole = role;
-  document.getElementById('role-driver').classList.toggle('active', role === 'driver');
-  document.getElementById('role-passenger').classList.toggle('active', role === 'passenger');
-  document.getElementById('car-fields').style.display = role === 'driver' ? '' : 'none';
+// toggles which role is selected on the register form
+function PICKrole(ROLE) {
+  SELECTEDrole = ROLE;
+  document.getElementById('role-driver').classList.toggle('active', ROLE === 'driver');
+  document.getElementById('role-passenger').classList.toggle('active', ROLE === 'passenger');
+  document.getElementById('car-fields').style.display = ROLE === 'driver' ? '' : 'none';
 }
 
-function toggleDay(btn) {
-  btn.classList.toggle('active');
+function TOGGLEday(BTN) {
+  BTN.classList.toggle('active');
 }
 
-async function submitRegister(e) {
-  e.preventDefault();
-  const btn = document.getElementById('reg-btn');
-  const errEl = document.getElementById('form-error');
-  const form = e.target;
+// handles the register form submit
+async function SUBMITregister(E) {
+  E.preventDefault();
+  const BTN = document.getElementById('reg-btn');
+  const ERRel = document.getElementById('form-error');
+  const FORM = E.target;
 
-  // Client-side validation
-  if (form.password.value !== form.confirmPassword.value) {
-    errEl.textContent = 'Passwords do not match';
-    errEl.style.display = 'block';
+  // basic password match check before hitting the server
+  if (FORM.password.value !== FORM.confirmPassword.value) {
+    ERRel.textContent = 'Passwords do not match';
+    ERRel.style.display = 'block';
     return;
   }
-  // Collect commute days
-  const commuteDays = [...document.querySelectorAll('.day-btn.active')].map((b) => b.textContent);
+  // grab whichever commute days are toggled on
+  const COMMUTEdays = [...document.querySelectorAll('.day-btn.active')].map((B) => B.textContent);
 
-  btn.textContent = 'Creating profile…';
-  btn.disabled = true;
-  errEl.style.display = 'none';
+  BTN.textContent = 'Creating profile…';
+  BTN.disabled = true;
+  ERRel.style.display = 'none';
 
-  const body = {
-    firstName: form.firstName.value,
-    lastName: form.lastName.value,
-    email: form.email.value,
-    password: form.password.value,
-    role: selectedRole,
-    area: form.area.value,
-    commuteDays,
-    departureTime: form.departureTime.value,
-    returnTime: form.returnTime.value,
+  const BODY = {
+    firstName: FORM.firstName.value,
+    lastName: FORM.lastName.value,
+    email: FORM.email.value,
+    password: FORM.password.value,
+    role: SELECTEDrole,
+    area: FORM.area.value,
+    commuteDays: COMMUTEdays,
+    departureTime: FORM.departureTime.value,
+    returnTime: FORM.returnTime.value,
   };
 
-  if (selectedRole === 'driver') {
-    body.carRegistration = form.carRegistration?.value || '';
-    body.carModel = form.carModel?.value || '';
-    body.seatsAvailable = parseInt(form.seatsAvailable?.value) || 2;
+  if (SELECTEDrole === 'driver') {
+    BODY.carRegistration = FORM.carRegistration?.value || '';
+    BODY.carModel = FORM.carModel?.value || '';
+    BODY.seatsAvailable = parseInt(FORM.seatsAvailable?.value) || 2;
   }
 
   try {
-    const data = await apiFetch('/auth/register', {
+    const DATA = await APIFetch('/auth/register', {
       method: 'POST',
-      body: JSON.stringify(body),
+      body: JSON.stringify(BODY),
     });
 
-    setToken(data.token);
-    currentUser = data.user;
-    updateNav();
-    connectSSE();
-    showToast(`Welcome to CarFun, ${currentUser.firstName}!`);
-    showPage('rides');
-    form.reset();
-  } catch (err) {
-    errEl.textContent = err.message;
-    errEl.style.display = 'block';
+    SETtoken(DATA.token);
+    CURRENTuser = DATA.user;
+    UPDATEnav();
+    CONNECTsse();
+    SHOWtoast(`Welcome to CarFun, ${CURRENTuser.firstName}!`);
+    SHOWpage('rides');
+    FORM.reset();
+  } catch (ERR) {
+    ERRel.textContent = ERR.message;
+    ERRel.style.display = 'block';
   } finally {
-    btn.textContent = 'Create Profile →';
-    btn.disabled = false;
+    BTN.textContent = 'Create Profile →';
+    BTN.disabled = false;
   }
 }
 
-// ── Logout ────────────────────────────────────────────────────────────────
-function logout() {
-  disconnectSSE();
-  clearToken();
-  currentUser = null;
-  activeConvoId = null;
-  updateNav();
-  showPage('home');
-  showToast('Logged out successfully');
+// logs the user out and wipes local state
+function LOGOUT() {
+  DISCONNECTsse();
+  CLEARtoken();
+  CURRENTuser = null;
+  ACTIVEconvoid = null;
+  UPDATEnav();
+  SHOWpage('home');
+  SHOWtoast('Logged out successfully');
 }
 
-// ── Rides: Load ───────────────────────────────────────────────────────────
-async function loadRides() {
-  const grid = document.getElementById('rides-grid');
-  if (!grid) return;
+// loads the rides list, applying any active filters
+// dhovie add pagination here when there are more rides — the grid is gonna get huge -Danish
+async function LOADrides() {
+  const GRID = document.getElementById('rides-grid');
+  if (!GRID) return;
 
-  grid.innerHTML = '<div class="loading-state">Loading rides…</div>';
+  GRID.innerHTML = '<div class="loading-state">Loading rides…</div>';
 
-  const area = document.getElementById('filter-area')?.value || '';
-  const date = document.getElementById('filter-date')?.value || '';
+  const AREA = document.getElementById('filter-area')?.value || '';
+  const DATE = document.getElementById('filter-date')?.value || '';
 
-  const params = new URLSearchParams();
-  if (area) params.set('area', area);
-  if (date) params.set('date', date);
+  const PARAMS = new URLSearchParams();
+  if (AREA) PARAMS.set('area', AREA);
+  if (DATE) PARAMS.set('date', DATE);
 
   try {
-    const data = await apiFetch(`/rides?${params}`);
-    renderRides(data.rides);
-  } catch (err) {
-    grid.innerHTML = `<div class="empty-state"><div class="big">⚠️</div><p>${err.message}</p></div>`;
+    const DATA = await APIFetch(`/rides?${PARAMS}`);
+    RENDERrides(DATA.rides);
+  } catch (ERR) {
+    GRID.innerHTML = `<div class="empty-state"><div class="big">⚠️</div><p>${ERR.message}</p></div>`;
   }
 }
 
-function clearFilters() {
-  const areaEl = document.getElementById('filter-area');
-  const dateEl = document.getElementById('filter-date');
-  if (areaEl) areaEl.value = '';
-  if (dateEl) dateEl.value = '';
-  loadRides();
+function CLEARfilters() {
+  const AREAel = document.getElementById('filter-area');
+  const DATEel = document.getElementById('filter-date');
+  if (AREAel) AREAel.value = '';
+  if (DATEel) DATEel.value = '';
+  LOADrides();
 }
 
-function renderRides(rides) {
-  const grid = document.getElementById('rides-grid');
-  if (!rides || rides.length === 0) {
-    grid.innerHTML = `
+function RENDERrides(RIDES) {
+  const GRID = document.getElementById('rides-grid');
+  if (!RIDES || RIDES.length === 0) {
+    GRID.innerHTML = `
       <div class="empty-state">
         <div class="big">🚗</div>
         <p>No rides available right now — check back soon or offer one!</p>
-        ${currentUser && (currentUser.role === 'driver' || currentUser.role === 'both')
-          ? '<button class="btn-primary" onclick="showPage(\'offer\')">Post a ride</button>'
-          : '<button class="btn-secondary" onclick="showPage(\'register\')">Join to get notified</button>'}
+        ${CURRENTuser && (CURRENTuser.role === 'driver' || CURRENTuser.role === 'both')
+          ? '<button class="btn-primary" onclick="SHOWpage(\'offer\')">Post a ride</button>'
+          : '<button class="btn-secondary" onclick="SHOWpage(\'register\')">Join to get notified</button>'}
       </div>`;
     return;
   }
 
-  // Avatar colours by index
-  const avColors = [
+  // rotate through these colors for the driver avatar chips
+  const AVcolors = [
     { bg: 'rgba(200,240,58,0.18)', color: '#C8F03A' },
     { bg: 'rgba(74,144,217,0.18)', color: '#7ab8f5' },
     { bg: 'rgba(255,107,53,0.18)', color: '#ff9a74' },
@@ -270,600 +272,642 @@ function renderRides(rides) {
     { bg: 'rgba(255,193,7,0.18)', color: '#ffd54f' },
   ];
 
-  grid.innerHTML = rides.map((ride, i) => {
-    const driver = ride.driver || {};
-    const initials = driver.firstName
-      ? `${driver.firstName[0]}${driver.lastName[0]}`.toUpperCase()
+  GRID.innerHTML = RIDES.map((RIDE, I) => {
+    const DRIVER = RIDE.driver || {};
+    const INITIALS = DRIVER.firstName
+      ? `${DRIVER.firstName[0]}${DRIVER.lastName[0]}`.toUpperCase()
       : '??';
-    const rating = driver.rating ? `★ ${driver.rating}` : 'New';
-    const col = avColors[i % avColors.length];
-    const seatsLeft = ride.seatsTotal - ride.seatsBooked;
-    const isFull = seatsLeft <= 0;
-    const rideDate = ride.date ? new Date(ride.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : '—';
-    const isMyRide = currentUser && driver._id === currentUser._id;
+    const RATING = DRIVER.rating ? `★ ${DRIVER.rating}` : 'New';
+    const COL = AVcolors[I % AVcolors.length];
+    const SEATSleft = RIDE.seatsTotal - RIDE.seatsBooked;
+    const ISfull = SEATSleft <= 0;
+    const RIDEdate = RIDE.date ? new Date(RIDE.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : '—';
+    const ISMyride = CURRENTuser && DRIVER._id === CURRENTuser._id;
 
     return `
       <div class="ride-card">
         <div class="rc-top">
           <div class="rc-driver">
-            <div class="rc-av" style="background:${col.bg};color:${col.color};border:1px solid ${col.color}33">${initials}</div>
-            <div><div class="rc-name">${driver.firstName || 'Driver'} ${driver.lastName?.[0] || ''}.</div><div class="rc-rating">${rating}</div></div>
+            <div class="rc-av" style="background:${COL.bg};color:${COL.color};border:1px solid ${COL.color}33">${INITIALS}</div>
+            <div><div class="rc-name">${DRIVER.firstName || 'Driver'} ${DRIVER.lastName?.[0] || ''}.</div><div class="rc-rating">${RATING}</div></div>
           </div>
-          <span class="${isFull ? 'full-pill' : 'seats-pill'}">${isFull ? 'Full' : `${seatsLeft} seat${seatsLeft !== 1 ? 's' : ''}`}</span>
+          <span class="${ISfull ? 'full-pill' : 'seats-pill'}">${ISfull ? 'Full' : `${SEATSleft} seat${SEATSleft !== 1 ? 's' : ''}`}</span>
         </div>
         <div class="rc-route">
-          <div class="rc-from"><div class="rdot from"></div>${ride.fromArea}</div>
+          <div class="rc-from"><div class="rdot from"></div>${RIDE.fromArea}</div>
           <div class="rc-divider"></div>
-          <div class="rc-to"><div class="rdot to"></div>${ride.toAddress || 'BathSpa Academic Centre RAK'}</div>
+          <div class="rc-to"><div class="rdot to"></div>${RIDE.toAddress || 'BathSpa Academic Centre RAK'}</div>
         </div>
         <div class="rc-meta">
-          <span class="rc-chip">🕐 ${ride.departureTime}</span>
-          <span class="rc-chip">📅 ${rideDate}</span>
-          ${ride.costContribution > 0 ? `<span class="rc-chip">💷 £${ride.costContribution}/person</span>` : '<span class="rc-chip">🆓 Free</span>'}
+          <span class="rc-chip">🕐 ${RIDE.departureTime}</span>
+          <span class="rc-chip">📅 ${RIDEdate}</span>
+          ${RIDE.costContribution > 0 ? `<span class="rc-chip">💰 AED ${RIDE.costContribution}/person</span>` : '<span class="rc-chip">🆓 Free</span>'}
         </div>
         <button
           class="rc-btn"
-          onclick="requestRide('${ride._id}', this)"
-          ${isFull || isMyRide ? 'disabled' : ''}
-        >${isMyRide ? 'Your ride' : isFull ? 'Ride full' : 'Request this ride'}</button>
+          onclick="REQUESTride('${RIDE._id}', this)"
+          ${ISfull || ISMyride ? 'disabled' : ''}
+        >${ISMyride ? 'Your ride' : ISfull ? 'Ride full' : 'Request this ride'}</button>
       </div>`;
   }).join('');
 }
 
-// ── Rides: Request ────────────────────────────────────────────────────────
-async function requestRide(rideId, btn) {
-  if (!currentUser) {
-    showToast('Please login first to request a ride', true);
-    showPage('login');
+// sends a ride request — prompts login if they're not logged in
+async function REQUESTride(RIDEid, BTN) {
+  if (!CURRENTuser) {
+    SHOWtoast('Please login first to request a ride', true);
+    SHOWpage('login');
     return;
   }
 
-  btn.textContent = 'Sending…';
-  btn.disabled = true;
+  BTN.textContent = 'Sending…';
+  BTN.disabled = true;
 
   try {
-    await apiFetch(`/rides/${rideId}/request`, { method: 'POST' });
-    btn.textContent = 'Request sent ✓';
-    showToast('Ride request sent to the driver!');
-  } catch (err) {
-    btn.textContent = 'Request this ride';
-    btn.disabled = false;
-    showToast(err.message, true);
+    await APIFetch(`/rides/${RIDEid}/request`, { method: 'POST' });
+    BTN.textContent = 'Request sent ✓';
+    SHOWtoast('Ride request sent to the driver!');
+  } catch (ERR) {
+    BTN.textContent = 'Request this ride';
+    BTN.disabled = false;
+    SHOWtoast(ERR.message, true);
   }
 }
 
-// ── Offer Ride ────────────────────────────────────────────────────────────
-async function submitOffer(e) {
-  e.preventDefault();
-  const form = e.target;
-  const btn = form.querySelector('button[type="submit"]');
+// posts a new ride offer
+async function SUBMIToffer(E) {
+  E.preventDefault();
+  const FORM = E.target;
+  const BTN = FORM.querySelector('button[type="submit"]');
 
-  btn.textContent = 'Posting…';
-  btn.disabled = true;
+  BTN.textContent = 'Posting…';
+  BTN.disabled = true;
 
-  const body = {
-    fromArea: form.fromArea.value,
-    fromAddress: form.fromAddress.value,
-    date: form.date.value,
-    departureTime: form.departureTime.value,
-    returnTime: form.returnTime.value,
-    seatsTotal: parseInt(form.seatsTotal.value),
-    costContribution: parseFloat(form.costContribution.value) || 0,
-    notes: form.notes.value,
+  const BODY = {
+    fromArea: FORM.fromArea.value,
+    fromAddress: FORM.fromAddress.value,
+    date: FORM.date.value,
+    departureTime: FORM.departureTime.value,
+    returnTime: FORM.returnTime.value,
+    seatsTotal: parseInt(FORM.seatsTotal.value),
+    costContribution: parseFloat(FORM.costContribution.value) || 0,
+    notes: FORM.notes.value,
   };
 
   try {
-    await apiFetch('/rides', { method: 'POST', body: JSON.stringify(body) });
-    showToast('Ride posted! Students can now request it.');
-    form.reset();
-    showPage('rides');
-  } catch (err) {
-    showToast(err.message, true);
+    await APIFetch('/rides', { method: 'POST', body: JSON.stringify(BODY) });
+    SHOWtoast('Ride posted! Students can now request it.');
+    FORM.reset();
+    SHOWpage('rides');
+  } catch (ERR) {
+    SHOWtoast(ERR.message, true);
   } finally {
-    btn.textContent = 'Post Ride →';
-    btn.disabled = false;
+    BTN.textContent = 'Post Ride →';
+    BTN.disabled = false;
   }
 }
 
-// ── Dashboard ─────────────────────────────────────────────────────────────
-async function loadDashboard() {
-  if (!currentUser) return;
+// loads dashboard data for both driver and passenger views
+async function LOADdashboard() {
+  if (!CURRENTuser) return;
   try {
-    const data = await apiFetch('/users/my-rides');
-    renderDashDriver(data.driverRides);
-    renderDashPassenger(data.passengerRides);
-  } catch (err) {
-    showToast(err.message, true);
+    const DATA = await APIFetch('/users/my-rides');
+    RENDERdashdriver(DATA.driverRides);
+    RENDERdashpassenger(DATA.passengerRides);
+  } catch (ERR) {
+    SHOWtoast(ERR.message, true);
   }
 }
 
-function switchDashTab(tab, btn) {
-  document.querySelectorAll('.dash-tab').forEach((t) => t.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('dash-driving').style.display = tab === 'driving' ? '' : 'none';
-  document.getElementById('dash-passenger').style.display = tab === 'passenger' ? '' : 'none';
+function SWITCHdashtab(TAB, BTN) {
+  document.querySelectorAll('.dash-tab').forEach((T) => T.classList.remove('active'));
+  BTN.classList.add('active');
+  document.getElementById('dash-driving').style.display = TAB === 'driving' ? '' : 'none';
+  document.getElementById('dash-passenger').style.display = TAB === 'passenger' ? '' : 'none';
 }
 
-function renderDashDriver(rides) {
-  const el = document.getElementById('dash-driving');
-  if (!rides || rides.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="big">🚗</div><p>You haven't offered any rides yet.</p><button class="btn-primary" onclick="showPage('offer')">Post a ride</button></div>`;
+function RENDERdashdriver(RIDES) {
+  const EL = document.getElementById('dash-driving');
+  if (!RIDES || RIDES.length === 0) {
+    EL.innerHTML = `<div class="empty-state"><div class="big">🚗</div><p>You haven't offered any rides yet.</p><button class="btn-primary" onclick="SHOWpage('offer')">Post a ride</button></div>`;
     return;
   }
 
-  el.innerHTML = rides.map((ride) => {
-    const rideDate = ride.date ? new Date(ride.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : '—';
-    const pending = (ride.requests || []).filter((r) => r.status === 'pending');
+  EL.innerHTML = RIDES.map((RIDE) => {
+    const RIDEdate = RIDE.date ? new Date(RIDE.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : '—';
+    const PENDING = (RIDE.requests || []).filter((R) => R.status === 'pending');
 
     return `
       <div class="dash-ride">
         <div>
-          <div class="dash-route">${ride.fromArea} → BathSpa Academic Centre RAK</div>
-          <div class="dash-meta">${rideDate} at ${ride.departureTime} · ${ride.seatsTotal - ride.seatsBooked} seats left</div>
-          ${pending.length > 0 ? `
+          <div class="dash-route">${RIDE.fromArea} → BathSpa Academic Centre RAK</div>
+          <div class="dash-meta">${RIDEdate} at ${RIDE.departureTime} · ${RIDE.seatsTotal - RIDE.seatsBooked} seats left</div>
+          ${PENDING.length > 0 ? `
             <div class="requests-list">
-              ${pending.map((r) => `
+              ${PENDING.map((R) => `
                 <div class="req-row">
-                  <span>${r.passenger?.firstName || 'Student'} ${r.passenger?.lastName?.[0] || ''}. from ${r.passenger?.area || '—'}</span>
+                  <span>${R.passenger?.firstName || 'Student'} ${R.passenger?.lastName?.[0] || ''}. from ${R.passenger?.area || '—'}</span>
                   <div class="req-actions">
-                    <button class="btn-accept" onclick="handleRequest('${ride._id}','${r._id}','accepted', this)">Accept</button>
-                    <button class="btn-reject" onclick="handleRequest('${ride._id}','${r._id}','rejected', this)">Decline</button>
+                    <button class="btn-accept" onclick="HANDLErequest('${RIDE._id}','${R._id}','accepted', this)">Accept</button>
+                    <button class="btn-reject" onclick="HANDLErequest('${RIDE._id}','${R._id}','rejected', this)">Decline</button>
                   </div>
                 </div>`).join('')}
-              ${(ride.requests || []).filter(r => r.status === 'accepted' && r.pickupLocation?.lat != null).map((r) => `
+              ${(RIDE.requests || []).filter(R => R.status === 'accepted' && R.pickupLocation?.lat != null).map((R) => `
                 <div class="req-row">
-                  <span>📍 ${r.passenger?.firstName || 'Passenger'} ${r.passenger?.lastName?.[0] || ''}. has set a pickup pin</span>
-                  <button class="btn-pin" onclick="openViewPickupMap('${r.passenger?.firstName || 'Passenger'}',${r.pickupLocation.lat},${r.pickupLocation.lng})">View Pin</button>
+                  <span>📍 ${R.passenger?.firstName || 'Passenger'} ${R.passenger?.lastName?.[0] || ''}. has set a pickup pin</span>
+                  <button class="btn-pin" onclick="OPENviewpickupmap('${R.passenger?.firstName || 'Passenger'}',${R.pickupLocation.lat},${R.pickupLocation.lng})">View Pin</button>
                 </div>`).join('')}
             </div>` : `
-            ${(ride.requests || []).filter(r => r.status === 'accepted' && r.pickupLocation?.lat != null).length > 0 ? `
+            ${(RIDE.requests || []).filter(R => R.status === 'accepted' && R.pickupLocation?.lat != null).length > 0 ? `
             <div class="requests-list">
-              ${(ride.requests || []).filter(r => r.status === 'accepted' && r.pickupLocation?.lat != null).map((r) => `
+              ${(RIDE.requests || []).filter(R => R.status === 'accepted' && R.pickupLocation?.lat != null).map((R) => `
                 <div class="req-row">
-                  <span>📍 ${r.passenger?.firstName || 'Passenger'} ${r.passenger?.lastName?.[0] || ''}. has set a pickup pin</span>
-                  <button class="btn-pin" onclick="openViewPickupMap('${r.passenger?.firstName || 'Passenger'}',${r.pickupLocation.lat},${r.pickupLocation.lng})">View Pin</button>
+                  <span>📍 ${R.passenger?.firstName || 'Passenger'} ${R.passenger?.lastName?.[0] || ''}. has set a pickup pin</span>
+                  <button class="btn-pin" onclick="OPENviewpickupmap('${R.passenger?.firstName || 'Passenger'}',${R.pickupLocation.lat},${R.pickupLocation.lng})">View Pin</button>
                 </div>`).join('')}
             </div>` : ''}`}
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem">
-          <span class="status-pill status-${ride.status}">${ride.status}</span>
-          ${ride.status === 'active' || ride.status === 'full' ? `
-            <button class="btn-complete" onclick="markRideCompleted('${ride._id}', this)">Mark as Completed</button>` : ''}
+          <span class="status-pill status-${RIDE.status}">${RIDE.status}</span>
+          ${RIDE.status === 'active' || RIDE.status === 'full' ? `
+            <button class="btn-complete" onclick="MARKridecompleted('${RIDE._id}', this)">Mark as Completed</button>` : ''}
         </div>
       </div>`;
   }).join('');
 }
 
-function renderDashPassenger(rides) {
-  const el = document.getElementById('dash-passenger');
-  if (!rides || rides.length === 0) {
-    el.innerHTML = `<div class="empty-state"><div class="big">🎒</div><p>You haven't requested any rides yet.</p><button class="btn-primary" onclick="showPage('rides')">Find rides</button></div>`;
+function RENDERdashpassenger(RIDES) {
+  const EL = document.getElementById('dash-passenger');
+  if (!RIDES || RIDES.length === 0) {
+    EL.innerHTML = `<div class="empty-state"><div class="big">🎒</div><p>You haven't requested any rides yet.</p><button class="btn-primary" onclick="SHOWpage('rides')">Find rides</button></div>`;
     return;
   }
 
-  el.innerHTML = rides.map((ride) => {
-    const rideDate = ride.date ? new Date(ride.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : '—';
-    const myRequest = (ride.requests || []).find(
-      (r) => r.passenger?.toString() === currentUser._id || r.passenger?._id === currentUser._id
+  EL.innerHTML = RIDES.map((RIDE) => {
+    const RIDEdate = RIDE.date ? new Date(RIDE.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : '—';
+    const MYrequest = (RIDE.requests || []).find(
+      (R) => R.passenger?.toString() === CURRENTuser._id || R.passenger?._id === CURRENTuser._id
     );
 
-    const isAccepted = myRequest?.status === 'accepted';
-    const hasPin = isAccepted && myRequest?.pickupLocation?.lat != null;
+    const ISaccepted = MYrequest?.status === 'accepted';
+    const HASpin = ISaccepted && MYrequest?.pickupLocation?.lat != null;
 
     return `
       <div class="dash-ride">
         <div>
-          <div class="dash-route">${ride.fromArea} → BathSpa Academic Centre RAK</div>
-          <div class="dash-meta">Driver: ${ride.driver?.firstName || 'Unknown'} · ${rideDate} at ${ride.departureTime}</div>
-          ${isAccepted ? `<div style="margin-top:0.5rem">
-            <button class="btn-pin" onclick="openSetPickupMap('${ride._id}','${myRequest._id}',${hasPin ? myRequest.pickupLocation.lat : 'null'},${hasPin ? myRequest.pickupLocation.lng : 'null'})">
-              📍 ${hasPin ? 'Update Pickup Pin' : 'Set Pickup Pin'}
+          <div class="dash-route">${RIDE.fromArea} → BathSpa Academic Centre RAK</div>
+          <div class="dash-meta">Driver: ${RIDE.driver?.firstName || 'Unknown'} · ${RIDEdate} at ${RIDE.departureTime}</div>
+          ${ISaccepted ? `<div style="margin-top:0.5rem">
+            <button class="btn-pin" onclick="OPENsetpickupmap('${RIDE._id}','${MYrequest._id}',${HASpin ? MYrequest.pickupLocation.lat : 'null'},${HASpin ? MYrequest.pickupLocation.lng : 'null'})">
+              📍 ${HASpin ? 'Update Pickup Pin' : 'Set Pickup Pin'}
             </button>
           </div>` : ''}
         </div>
-        <span class="status-pill status-${myRequest?.status || 'pending'}">${myRequest?.status || 'pending'}</span>
+        <span class="status-pill status-${MYrequest?.status || 'pending'}">${MYrequest?.status || 'pending'}</span>
       </div>`;
   }).join('');
 }
 
-async function handleRequest(rideId, requestId, status, btn) {
-  btn.disabled = true;
+async function HANDLErequest(RIDEid, REQUESTid, STATUS, BTN) {
+  BTN.disabled = true;
   try {
-    await apiFetch(`/rides/${rideId}/request/${requestId}`, {
+    await APIFetch(`/rides/${RIDEid}/request/${REQUESTid}`, {
       method: 'PUT',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status: STATUS }),
     });
-    showToast(`Request ${status === 'accepted' ? 'accepted ✓' : 'declined'}`);
-    loadDashboard();
-  } catch (err) {
-    showToast(err.message, true);
-    btn.disabled = false;
+    SHOWtoast(`Request ${STATUS === 'accepted' ? 'accepted ✓' : 'declined'}`);
+    LOADdashboard();
+  } catch (ERR) {
+    SHOWtoast(ERR.message, true);
+    BTN.disabled = false;
   }
 }
 
-async function markRideCompleted(rideId, btn) {
+async function MARKridecompleted(RIDEid, BTN) {
   if (!confirm('Mark this ride as completed? This cannot be undone.')) return;
-  btn.textContent = 'Saving…';
-  btn.disabled = true;
+  BTN.textContent = 'Saving…';
+  BTN.disabled = true;
   try {
-    await apiFetch(`/rides/${rideId}`, {
+    await APIFetch(`/rides/${RIDEid}`, {
       method: 'PUT',
       body: JSON.stringify({ status: 'completed' }),
     });
-    showToast('Ride marked as completed ✓');
-    loadDashboard();
-  } catch (err) {
-    showToast(err.message, true);
-    btn.textContent = 'Mark as Completed';
-    btn.disabled = false;
+    SHOWtoast('Ride marked as completed ✓');
+    LOADdashboard();
+  } catch (ERR) {
+    SHOWtoast(ERR.message, true);
+    BTN.textContent = 'Mark as Completed';
+    BTN.disabled = false;
   }
 }
 
-// ── Map / Pickup Pin ───────────────────────────────────────────────────────
-const RAK_CENTER = [25.7889, 55.9432];
-let leafletMap = null;
-let pickupMarker = null;
-let mapContext = null; // { rideId, requestId }
+// map stuff — RAK city center as the default starting view
+const RAKcenter = [25.7889, 55.9432];
+let LEAFLETmap = null;
+let PICKUPmarker = null;
+let MAPcontext = null; // { rideId, requestId }
 
-function openSetPickupMap(rideId, requestId, existingLat, existingLng) {
-  mapContext = { rideId, requestId };
+function OPENsetpickupmap(RIDEid, REQUESTid, EXISTINGlat, EXISTINGlng) {
+  MAPcontext = { rideId: RIDEid, requestId: REQUESTid };
   document.getElementById('map-modal-title').textContent = 'Set Your Pickup Location';
   document.getElementById('map-modal-sub').textContent = 'Tap the map to drop your pin — only your driver can see this';
   document.getElementById('map-modal-footer').style.display = 'flex';
   document.getElementById('map-save-btn').disabled = true;
   document.getElementById('map-coords').textContent = 'No pin placed yet';
   document.getElementById('map-modal').style.display = 'flex';
-  initMap('set', existingLat, existingLng);
+  INITmap('set', EXISTINGlat, EXISTINGlng);
 }
 
-function openViewPickupMap(passengerName, lat, lng) {
-  mapContext = null;
-  document.getElementById('map-modal-title').textContent = `${passengerName}'s Pickup Pin`;
+function OPENviewpickupmap(PASSENGERname, LAT, LNG) {
+  MAPcontext = null;
+  document.getElementById('map-modal-title').textContent = `${PASSENGERname}'s Pickup Pin`;
   document.getElementById('map-modal-sub').textContent = 'Passenger-set pickup location';
   document.getElementById('map-modal-footer').style.display = 'none';
   document.getElementById('map-modal').style.display = 'flex';
-  initMap('view', lat, lng, passengerName);
+  INITmap('view', LAT, LNG, PASSENGERname);
 }
 
-function initMap(mode, lat, lng, label) {
+function INITmap(MODE, LAT, LNG, LABEL) {
   setTimeout(() => {
-    if (leafletMap) { leafletMap.remove(); leafletMap = null; pickupMarker = null; }
+    if (LEAFLETmap) { LEAFLETmap.remove(); LEAFLETmap = null; PICKUPmarker = null; }
 
-    const hasLocation = lat != null && lng != null;
-    const center = hasLocation ? [lat, lng] : RAK_CENTER;
-    const zoom = hasLocation ? 15 : 12;
+    const HASlocation = LAT != null && LNG != null;
+    const CENTER = HASlocation ? [LAT, LNG] : RAKcenter;
+    const ZOOM = HASlocation ? 15 : 12;
 
-    leafletMap = L.map('map-container').setView(center, zoom);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© <a href="https://www.openstreetmap.org">OpenStreetMap</a>',
-      maxZoom: 19,
-    }).addTo(leafletMap);
+    LEAFLETmap = L.map('map-container').setView(CENTER, ZOOM);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 20,
+    }).addTo(LEAFLETmap);
+    LEAFLETmap.invalidateSize();
 
-    if (hasLocation) {
-      pickupMarker = L.marker([lat, lng]).addTo(leafletMap);
-      if (mode === 'view') pickupMarker.bindPopup(label || 'Pickup').openPopup();
-      if (mode === 'set') {
-        document.getElementById('map-coords').textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+    if (HASlocation) {
+      PICKUPmarker = L.marker([LAT, LNG]).addTo(LEAFLETmap);
+      if (MODE === 'view') PICKUPmarker.bindPopup(LABEL || 'Pickup').openPopup();
+      if (MODE === 'set') {
+        document.getElementById('map-coords').textContent = `${LAT.toFixed(5)}, ${LNG.toFixed(5)}`;
         document.getElementById('map-save-btn').disabled = false;
       }
     }
 
-    if (mode === 'set') {
-      leafletMap.on('click', (e) => {
-        const { lat: clickLat, lng: clickLng } = e.latlng;
-        if (pickupMarker) {
-          pickupMarker.setLatLng([clickLat, clickLng]);
+    if (MODE === 'set') {
+      LEAFLETmap.on('click', (E) => {
+        const { lat: CLICKlat, lng: CLICKlng } = E.latlng;
+        if (PICKUPmarker) {
+          PICKUPmarker.setLatLng([CLICKlat, CLICKlng]);
         } else {
-          pickupMarker = L.marker([clickLat, clickLng]).addTo(leafletMap);
+          PICKUPmarker = L.marker([CLICKlat, CLICKlng]).addTo(LEAFLETmap);
         }
-        document.getElementById('map-coords').textContent = `${clickLat.toFixed(5)}, ${clickLng.toFixed(5)}`;
+        document.getElementById('map-coords').textContent = `${CLICKlat.toFixed(5)}, ${CLICKlng.toFixed(5)}`;
         document.getElementById('map-save-btn').disabled = false;
       });
     }
   }, 80);
 }
 
-function closeMapModal() {
+function CLOSEmapmodal() {
   document.getElementById('map-modal').style.display = 'none';
-  if (leafletMap) { leafletMap.remove(); leafletMap = null; pickupMarker = null; }
-  mapContext = null;
+  if (LEAFLETmap) { LEAFLETmap.remove(); LEAFLETmap = null; PICKUPmarker = null; }
+  MAPcontext = null;
 }
 
-function handleMapOverlayClick(e) {
-  if (e.target === document.getElementById('map-modal')) closeMapModal();
+function HANDLEmapoverlayclick(E) {
+  if (E.target === document.getElementById('map-modal')) CLOSEmapmodal();
 }
 
-async function savePickupLocation() {
-  if (!mapContext || !pickupMarker) return;
-  const { lat, lng } = pickupMarker.getLatLng();
-  const btn = document.getElementById('map-save-btn');
-  btn.textContent = 'Saving…';
-  btn.disabled = true;
+async function SAVEpickuplocation() {
+  if (!MAPcontext || !PICKUPmarker) return;
+  const { lat: LAT, lng: LNG } = PICKUPmarker.getLatLng();
+  const BTN = document.getElementById('map-save-btn');
+  BTN.textContent = 'Saving…';
+  BTN.disabled = true;
   try {
-    await apiFetch(`/rides/${mapContext.rideId}/request/${mapContext.requestId}/location`, {
+    await APIFetch(`/rides/${MAPcontext.rideId}/request/${MAPcontext.requestId}/location`, {
       method: 'PUT',
-      body: JSON.stringify({ lat, lng }),
+      body: JSON.stringify({ lat: LAT, lng: LNG }),
     });
-    showToast('Pickup pin saved! Your driver can now see it.');
-    closeMapModal();
-    loadDashboard();
-  } catch (err) {
-    showToast(err.message, true);
-    btn.textContent = 'Save Location';
-    btn.disabled = false;
+    SHOWtoast('Pickup pin saved! Your driver can now see it.');
+    CLOSEmapmodal();
+    LOADdashboard();
+  } catch (ERR) {
+    SHOWtoast(ERR.message, true);
+    BTN.textContent = 'Save Location';
+    BTN.disabled = false;
   }
 }
 
-// ── SSE ────────────────────────────────────────────────────────────────────
-let eventSource = null;
+// SSE connection for real-time updates
+// dhovie add a reconnect counter so we don't spam the server if it keeps dropping -Danish
+let EVENTsource = null;
 
-function connectSSE() {
-  if (eventSource) eventSource.close();
-  const token = getToken();
-  if (!token) return;
+function CONNECTsse() {
+  if (EVENTsource) EVENTsource.close();
+  const TOKEN = GETtoken();
+  if (!TOKEN) return;
 
-  eventSource = new EventSource(`/api/events?token=${token}`);
+  EVENTsource = new EventSource(`/api/events?token=${TOKEN}`);
 
-  eventSource.addEventListener('ride-accepted', (e) => {
-    const { message } = JSON.parse(e.data);
-    showToast(message);
+  EVENTsource.addEventListener('ride-accepted', (E) => {
+    const { message: MESSAGE } = JSON.parse(E.data);
+    SHOWtoast(MESSAGE);
     document.getElementById('nav-messages').style.display = '';
-    if (document.getElementById('page-dashboard')?.classList.contains('active')) loadDashboard();
-    if (document.getElementById('page-messages')?.classList.contains('active')) loadMessages();
+    if (document.getElementById('page-dashboard')?.classList.contains('active')) LOADdashboard();
+    if (document.getElementById('page-messages')?.classList.contains('active')) LOADmessages();
   });
 
-  eventSource.addEventListener('ride-rejected', (e) => {
-    const { message } = JSON.parse(e.data);
-    showToast(message, true);
-    if (document.getElementById('page-dashboard')?.classList.contains('active')) loadDashboard();
+  EVENTsource.addEventListener('ride-rejected', (E) => {
+    const { message: MESSAGE } = JSON.parse(E.data);
+    SHOWtoast(MESSAGE, true);
+    if (document.getElementById('page-dashboard')?.classList.contains('active')) LOADdashboard();
   });
 
-  eventSource.addEventListener('pickup-pin-updated', (e) => {
-    const { passengerName } = JSON.parse(e.data);
-    showToast(`${passengerName} has pinned their pickup location`);
-    if (document.getElementById('page-dashboard')?.classList.contains('active')) loadDashboard();
+  EVENTsource.addEventListener('pickup-pin-updated', (E) => {
+    const { passengerName: PASSENGERname } = JSON.parse(E.data);
+    SHOWtoast(`${PASSENGERname} has pinned their pickup location`);
+    if (document.getElementById('page-dashboard')?.classList.contains('active')) LOADdashboard();
   });
 
-  eventSource.addEventListener('conversation-created', () => {
+  EVENTsource.addEventListener('conversation-created', () => {
     document.getElementById('nav-messages').style.display = '';
-    if (document.getElementById('page-messages')?.classList.contains('active')) loadMessages();
+    if (document.getElementById('page-messages')?.classList.contains('active')) LOADmessages();
   });
 
-  eventSource.addEventListener('new-message', (e) => {
-    const { convoId } = JSON.parse(e.data);
+  EVENTsource.addEventListener('new-message', (E) => {
+    const { convoId: CONVOid } = JSON.parse(E.data);
     if (document.getElementById('page-messages')?.classList.contains('active')) {
-      if (activeConvoId === convoId) {
-        fetchAndRenderChat(convoId, true);
+      if (ACTIVEconvoid === CONVOid) {
+        FETCHandrenderchat(CONVOid, true);
       } else {
-        loadMessages();
+        LOADmessages();
       }
     } else {
-      const badge = document.getElementById('msg-badge');
-      if (badge) { badge.style.display = ''; badge.textContent = '●'; }
+      const BADGE = document.getElementById('msg-badge');
+      if (BADGE) { BADGE.style.display = ''; BADGE.textContent = '●'; }
     }
   });
 
-  eventSource.onerror = () => {
-    eventSource.close();
-    setTimeout(connectSSE, 5000);
+  EVENTsource.onerror = () => {
+    EVENTsource.close();
+    setTimeout(CONNECTsse, 5000);
   };
 }
 
-function disconnectSSE() {
-  if (eventSource) { eventSource.close(); eventSource = null; }
+function DISCONNECTsse() {
+  if (EVENTsource) { EVENTsource.close(); EVENTsource = null; }
 }
 
-// ── Messages ───────────────────────────────────────────────────────────────
-let activeConvoId = null;
+// messages / conversations
+let ACTIVEconvoid = null;
 
-async function loadMessages() {
-  if (!currentUser) return;
-  const list = document.getElementById('convo-list');
-  list.innerHTML = '<div class="loading-state">Loading…</div>';
+async function LOADmessages() {
+  if (!CURRENTuser) return;
+  const LIST = document.getElementById('convo-list');
+  LIST.innerHTML = '<div class="loading-state">Loading…</div>';
   try {
-    const data = await apiFetch('/messages');
-    renderConvoList(data.conversations);
-  } catch (err) {
-    list.innerHTML = `<div class="empty-state"><p>${err.message}</p></div>`;
+    const DATA = await APIFetch('/messages');
+    RENDERconvolist(DATA.conversations);
+  } catch (ERR) {
+    LIST.innerHTML = `<div class="empty-state"><p>${ERR.message}</p></div>`;
   }
 }
 
-function renderConvoList(convos) {
-  const list = document.getElementById('convo-list');
-  if (!convos.length) {
-    list.innerHTML = '<div class="empty-state" style="padding:2rem;text-align:center;color:var(--muted);font-size:0.85rem;">No accepted rides yet.<br>Conversations appear here once a driver accepts your request.</div>';
+function RENDERconvolist(CONVOS) {
+  const LIST = document.getElementById('convo-list');
+  if (!CONVOS.length) {
+    LIST.innerHTML = '<div class="empty-state" style="padding:2rem;text-align:center;color:var(--muted);font-size:0.85rem;">No accepted rides yet.<br>Conversations appear here once a driver accepts your request.</div>';
     return;
   }
-  list.innerHTML = convos.map((c) => {
-    const other = currentUser._id === c.driver._id ? c.passenger : c.driver;
-    const last = c.messages.length ? c.messages[c.messages.length - 1] : null;
-    const rideDate = c.ride?.date ? new Date(c.ride.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
+  LIST.innerHTML = CONVOS.map((C) => {
+    const OTHER = CURRENTuser._id === C.driver._id ? C.passenger : C.driver;
+    const LAST = C.messages.length ? C.messages[C.messages.length - 1] : null;
+    const RIDEdate = C.ride?.date ? new Date(C.ride.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '';
     return `
-      <div class="convo-item${activeConvoId === c._id ? ' active' : ''}" onclick="openConvo('${c._id}', this)">
-        <div class="convo-name">${other.firstName} ${other.lastName}</div>
-        <div class="convo-route">${c.ride?.fromArea || ''} → Campus · ${rideDate}</div>
-        <div class="convo-preview">${last ? last.text : 'No messages yet'}</div>
+      <div class="convo-item${ACTIVEconvoid === C._id ? ' active' : ''}" onclick="OPENconvo('${C._id}', this)">
+        <div class="convo-name">${OTHER.firstName} ${OTHER.lastName}</div>
+        <div class="convo-route">${C.ride?.fromArea || ''} → Campus · ${RIDEdate}</div>
+        <div class="convo-preview">${LAST ? LAST.text : 'No messages yet'}</div>
       </div>`;
   }).join('');
 }
 
-async function openConvo(convoId, el) {
-  document.querySelectorAll('.convo-item').forEach((i) => i.classList.remove('active'));
-  el.classList.add('active');
-  activeConvoId = convoId;
+async function OPENconvo(CONVOid, EL) {
+  document.querySelectorAll('.convo-item').forEach((I) => I.classList.remove('active'));
+  EL.classList.add('active');
+  ACTIVEconvoid = CONVOid;
 
-  const main = document.getElementById('chat-main');
-  main.innerHTML = '<div class="chat-empty-state"><div class="loading-state">Loading…</div></div>';
+  const MAIN = document.getElementById('chat-main');
+  MAIN.innerHTML = '<div class="chat-empty-state"><div class="loading-state">Loading…</div></div>';
 
-  await fetchAndRenderChat(convoId);
+  await FETCHandrenderchat(CONVOid);
 }
 
-async function fetchAndRenderChat(convoId, silent = false) {
+async function FETCHandrenderchat(CONVOid, SILENT = false) {
   try {
-    const data = await apiFetch(`/messages/${convoId}`);
-    renderChat(data.conversation, silent);
-  } catch (err) {
-    if (!silent) showToast(err.message, true);
+    const DATA = await APIFetch(`/messages/${CONVOid}`);
+    RENDERchat(DATA.conversation, SILENT);
+  } catch (ERR) {
+    if (!SILENT) SHOWtoast(ERR.message, true);
   }
 }
 
-function renderChat(convo, silent = false) {
-  const main = document.getElementById('chat-main');
-  const other = currentUser._id === convo.driver._id ? convo.passenger : convo.driver;
-  const rideDate = convo.ride?.date ? new Date(convo.ride.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : '';
+function RENDERchat(CONVO, SILENT = false) {
+  const MAIN = document.getElementById('chat-main');
+  const OTHER = CURRENTuser._id === CONVO.driver._id ? CONVO.passenger : CONVO.driver;
+  const RIDEdate = CONVO.ride?.date ? new Date(CONVO.ride.date).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : '';
 
-  const wasAtBottom = main.scrollTop + main.clientHeight >= main.scrollHeight - 40;
+  const WASatbottom = MAIN.scrollTop + MAIN.clientHeight >= MAIN.scrollHeight - 40;
 
-  main.innerHTML = `
+  MAIN.innerHTML = `
     <div class="chat-header">
-      <div class="chat-header-name">${other.firstName} ${other.lastName}</div>
-      <div class="chat-header-route">${convo.ride?.fromArea || ''} → BathSpa Academic Centre RAK · ${rideDate} at ${convo.ride?.departureTime || ''}</div>
+      <div class="chat-header-name">${OTHER.firstName} ${OTHER.lastName}</div>
+      <div class="chat-header-route">${CONVO.ride?.fromArea || ''} → BathSpa Academic Centre RAK · ${RIDEdate} at ${CONVO.ride?.departureTime || ''}</div>
     </div>
     <div class="chat-messages" id="chat-msgs">
-      ${convo.messages.length === 0
+      ${CONVO.messages.length === 0
         ? '<div style="color:var(--muted);font-size:0.85rem;text-align:center;padding-top:2rem;">No messages yet — say hello!</div>'
-        : convo.messages.map((m) => {
-            const mine = m.sender === currentUser._id || m.sender?._id === currentUser._id;
-            const time = new Date(m.sentAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        : CONVO.messages.map((M) => {
+            const MINE = M.sender === CURRENTuser._id || M.sender?._id === CURRENTuser._id;
+            const TIME = new Date(M.sentAt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
             return `
-              <div style="display:flex;flex-direction:column;align-items:${mine ? 'flex-end' : 'flex-start'}">
-                <div class="msg-bubble ${mine ? 'mine' : 'theirs'}">${m.text}</div>
-                <div class="msg-time" style="align-self:${mine ? 'flex-end' : 'flex-start'}">${time}</div>
+              <div style="display:flex;flex-direction:column;align-items:${MINE ? 'flex-end' : 'flex-start'}">
+                <div class="msg-bubble ${MINE ? 'mine' : 'theirs'}">${M.text}</div>
+                <div class="msg-time" style="align-self:${MINE ? 'flex-end' : 'flex-start'}">${TIME}</div>
               </div>`;
           }).join('')}
     </div>
     <div class="chat-input-row">
-      <input type="text" id="chat-input" placeholder="Type a message…" onkeydown="if(event.key==='Enter')sendMessage('${convo._id}')" />
-      <button class="chat-send-btn" id="chat-send-btn" onclick="sendMessage('${convo._id}')">Send</button>
+      <input type="text" id="chat-input" placeholder="Type a message…" onkeydown="if(event.key==='Enter')SENDmessage('${CONVO._id}')" />
+      <button class="chat-send-btn" id="chat-send-btn" onclick="SENDmessage('${CONVO._id}')">Send</button>
     </div>`;
 
-  if (!silent || wasAtBottom) {
-    const msgs = document.getElementById('chat-msgs');
-    if (msgs) msgs.scrollTop = msgs.scrollHeight;
+  if (!SILENT || WASatbottom) {
+    const MSGS = document.getElementById('chat-msgs');
+    if (MSGS) MSGS.scrollTop = MSGS.scrollHeight;
   }
 }
 
-async function sendMessage(convoId) {
-  const input = document.getElementById('chat-input');
-  const btn = document.getElementById('chat-send-btn');
-  const text = input?.value?.trim();
-  if (!text) return;
+async function SENDmessage(CONVOid) {
+  const INPUT = document.getElementById('chat-input');
+  const BTN = document.getElementById('chat-send-btn');
+  const TEXT = INPUT?.value?.trim();
+  if (!TEXT) return;
 
-  input.value = '';
-  btn.disabled = true;
+  INPUT.value = '';
+  BTN.disabled = true;
 
   try {
-    await apiFetch(`/messages/${convoId}`, { method: 'POST', body: JSON.stringify({ text }) });
-    await fetchAndRenderChat(convoId);
-  } catch (err) {
-    showToast(err.message, true);
-    if (input) input.value = text;
+    await APIFetch(`/messages/${CONVOid}`, { method: 'POST', body: JSON.stringify({ text: TEXT }) });
+    await FETCHandrenderchat(CONVOid);
+  } catch (ERR) {
+    SHOWtoast(ERR.message, true);
+    if (INPUT) INPUT.value = TEXT;
   } finally {
-    if (btn) btn.disabled = false;
-    if (input) input.focus();
+    if (BTN) BTN.disabled = false;
+    if (INPUT) INPUT.focus();
   }
 }
 
-// ── Admin ──────────────────────────────────────────────────────────────────
-let allAdminUsers = [];
+// admin panel
+let ALLadminusers = [];
 
-async function loadAdmin() {
-  if (!currentUser || !currentUser.isAdmin) return;
-  const list = document.getElementById('admin-users-list');
-  list.innerHTML = '<div class="loading-state">Loading users…</div>';
+async function LOADadmin() {
+  if (!CURRENTuser || !CURRENTuser.isAdmin) return;
+  const LIST = document.getElementById('admin-users-list');
+  LIST.innerHTML = '<div class="loading-state">Loading users…</div>';
   try {
-    const data = await apiFetch('/users/all');
-    allAdminUsers = data.users;
-    updateAdminStats(data.users);
-    renderAdminUsers(data.users);
-  } catch (err) {
-    list.innerHTML = `<div class="empty-state"><p>${err.message}</p></div>`;
+    const DATA = await APIFetch('/users/all');
+    ALLadminusers = DATA.users;
+    UPDATEadminstats(DATA.users);
+    RENDERadminusers(DATA.users);
+  } catch (ERR) {
+    LIST.innerHTML = `<div class="empty-state"><p>${ERR.message}</p></div>`;
   }
 }
 
-function updateAdminStats(users) {
-  document.getElementById('asc-total').textContent = users.length;
-  document.getElementById('asc-drivers').textContent = users.filter((u) => u.role === 'driver' || u.role === 'both').length;
-  document.getElementById('asc-passengers').textContent = users.filter((u) => u.role === 'passenger' || u.role === 'both').length;
+function UPDATEadminstats(USERS) {
+  document.getElementById('asc-total').textContent = USERS.length;
+  document.getElementById('asc-drivers').textContent = USERS.filter((U) => U.role === 'driver' || U.role === 'both').length;
+  document.getElementById('asc-passengers').textContent = USERS.filter((U) => U.role === 'passenger' || U.role === 'both').length;
 }
 
-function filterAdminUsers() {
-  const q = document.getElementById('admin-search').value.toLowerCase();
-  const role = document.getElementById('admin-filter-role').value;
-  const filtered = allAdminUsers.filter((u) => {
-    const matchesText = `${u.firstName} ${u.lastName} ${u.email}`.toLowerCase().includes(q);
-    const matchesRole = !role || u.role === role || u.role === 'both';
-    return matchesText && matchesRole;
+function FILTERadminusers() {
+  const Q = document.getElementById('admin-search').value.toLowerCase();
+  const ROLE = document.getElementById('admin-filter-role').value;
+  const FILTERED = ALLadminusers.filter((U) => {
+    const MATCHEStext = `${U.firstName} ${U.lastName} ${U.email}`.toLowerCase().includes(Q);
+    const MATCHESrole = !ROLE || U.role === ROLE || U.role === 'both';
+    return MATCHEStext && MATCHESrole;
   });
-  renderAdminUsers(filtered);
+  RENDERadminusers(FILTERED);
 }
 
-function renderAdminUsers(users) {
-  const list = document.getElementById('admin-users-list');
-  if (!users.length) {
-    list.innerHTML = '<div class="empty-state"><p>No users found.</p></div>';
+function RENDERadminusers(USERS) {
+  const LIST = document.getElementById('admin-users-list');
+  if (!USERS.length) {
+    LIST.innerHTML = '<div class="empty-state"><p>No users found.</p></div>';
     return;
   }
-  list.innerHTML = users.map((u) => {
-    const initials = `${u.firstName[0]}${u.lastName[0]}`.toUpperCase();
-    const isSelf = u._id === currentUser._id;
+  LIST.innerHTML = USERS.map((U) => {
+    const INITIALS = `${U.firstName[0]}${U.lastName[0]}`.toUpperCase();
+    const ISself = U._id === CURRENTuser._id;
     return `
-      <div class="admin-user-row" id="aur-${u._id}">
+      <div class="admin-user-row" id="aur-${U._id}">
         <div class="aur-left">
-          <div class="aur-av">${initials}</div>
+          <div class="aur-av">${INITIALS}</div>
           <div>
-            <div class="aur-name">${u.firstName} ${u.lastName}${u.isAdmin ? ' 🛡️' : ''}</div>
-            <div class="aur-email">${u.email}</div>
-            <div class="aur-area">${u.area || '—'}</div>
+            <div class="aur-name">${U.firstName} ${U.lastName}${U.isAdmin ? ' 🛡️' : ''}</div>
+            <div class="aur-email">${U.email}</div>
+            <div class="aur-area">${U.area || '—'}</div>
           </div>
         </div>
         <div class="aur-right">
-          <span class="admin-badge ${u.role}">${u.role}</span>
-          ${!isSelf ? `<button class="btn-delete" onclick="deleteUser('${u._id}', '${u.firstName}', this)">Delete</button>` : '<span style="font-size:0.72rem;color:var(--muted)">You</span>'}
+          <span class="admin-badge ${U.role}">${U.role}</span>
+          ${!ISself ? `<button class="btn-delete" onclick="DELETEuser('${U._id}', '${U.firstName}', this)">Delete</button>` : '<span style="font-size:0.72rem;color:var(--muted)">You</span>'}
         </div>
       </div>`;
   }).join('');
 }
 
-async function deleteUser(userId, name, btn) {
-  if (!confirm(`Delete ${name}'s account? This also removes their rides.`)) return;
-  btn.textContent = 'Deleting…';
-  btn.disabled = true;
+async function DELETEuser(USERid, NAME, BTN) {
+  if (!confirm(`Delete ${NAME}'s account? This also removes their rides.`)) return;
+  BTN.textContent = 'Deleting…';
+  BTN.disabled = true;
   try {
-    await apiFetch(`/users/${userId}`, { method: 'DELETE' });
-    allAdminUsers = allAdminUsers.filter((u) => u._id !== userId);
-    document.getElementById(`aur-${userId}`)?.remove();
-    updateAdminStats(allAdminUsers);
-    showToast(`${name}'s account deleted.`);
-  } catch (err) {
-    showToast(err.message, true);
-    btn.textContent = 'Delete';
-    btn.disabled = false;
+    await APIFetch(`/users/${USERid}`, { method: 'DELETE' });
+    ALLadminusers = ALLadminusers.filter((U) => U._id !== USERid);
+    document.getElementById(`aur-${USERid}`)?.remove();
+    UPDATEadminstats(ALLadminusers);
+    SHOWtoast(`${NAME}'s account deleted.`);
+  } catch (ERR) {
+    SHOWtoast(ERR.message, true);
+    BTN.textContent = 'Delete';
+    BTN.disabled = false;
   }
 }
 
-// ── Bootstrap ─────────────────────────────────────────────────────────────
-async function init() {
-  const token = getToken();
-  if (token) {
+// runs on page load — checks if there's already a token and restores the session
+async function INIT() {
+  const TOKEN = GETtoken();
+  if (TOKEN) {
     try {
-      const data = await apiFetch('/auth/me');
-      currentUser = data.user;
+      const DATA = await APIFetch('/auth/me');
+      CURRENTuser = DATA.user;
     } catch (_) {
-      clearToken();
+      CLEARtoken();
     }
   }
-  updateNav();
-  if (currentUser) connectSSE();
+  UPDATEnav();
+  if (CURRENTuser) CONNECTsse();
 
-  // Set min date on offer form to today
-  const dateInput = document.querySelector('#offer-form input[name="date"]');
-  if (dateInput) dateInput.min = new Date().toISOString().split('T')[0];
-  const filterDate = document.getElementById('filter-date');
-  if (filterDate) filterDate.min = new Date().toISOString().split('T')[0];
+  // set min date on the offer form so past dates can't be picked
+  const DATEinput = document.querySelector('#offer-form input[name="date"]');
+  if (DATEinput) DATEinput.min = new Date().toISOString().split('T')[0];
+  const FILTERdate = document.getElementById('filter-date');
+  if (FILTERdate) FILTERdate.min = new Date().toISOString().split('T')[0];
 
-  // Pre-fill register form area if user is already known
-  pickRole('driver');
+  PICKrole('driver');
 }
 
-init();
+INIT();
+
+// Aliases so HTML onclick attributes (camelCase) resolve to the actual functions above
+const showPage         = SHOWpage;
+const logout           = LOGOUT;
+const loadRides        = LOADrides;
+const clearFilters     = CLEARfilters;
+const submitOffer      = SUBMIToffer;
+const switchDashTab    = SWITCHdashtab;
+const submitRegister   = SUBMITregister;
+const pickRole         = PICKrole;
+const toggleDay        = TOGGLEday;
+const submitLogin      = SUBMITlogin;
+const handleMapOverlayClick = HANDLEmapoverlayclick;
+const closeMapModal    = CLOSEmapmodal;
+const savePickupLocation = SAVEpickuplocation;
+const filterAdminUsers = FILTERadminusers;
+
+function toggleNotifPanel() {
+  const P = document.getElementById('notif-panel');
+  if (P) P.style.display = P.style.display === 'none' ? 'block' : 'none';
+}
+
+function clearNotifs() {
+  const LIST = document.getElementById('notif-list');
+  if (LIST) LIST.innerHTML = '<div class="notif-empty">No notifications yet</div>';
+  const BADGE = document.getElementById('notif-badge');
+  if (BADGE) BADGE.style.display = 'none';
+  const P = document.getElementById('notif-panel');
+  if (P) P.style.display = 'none';
+}
+
+function handlePhotoSelect(INPUT) {
+  if (!INPUT.files || !INPUT.files[0]) return;
+  const READER = new FileReader();
+  READER.onload = (E) => {
+    const AV = document.getElementById('profile-photo-av');
+    if (AV) { AV.style.backgroundImage = `url(${E.target.result})`; AV.textContent = ''; }
+  };
+  READER.readAsDataURL(INPUT.files[0]);
+}

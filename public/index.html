@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CarFun — BathSpa Academic Centre RAK Carpooling</title>
+  <title>CarFun: BathSpa Academic Centre RAK Carpooling</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
@@ -53,13 +54,13 @@
         <div class="hero-content">
           <div class="hero-badge">BathSpa Academic Centre RAK</div>
           <h1>Share rides,<br><span class="hl">share costs.</span></h1>
-          <p class="hero-sub">CarFun matches BathSpa RAK commuters for affordable, eco-friendly carpooling — based on where you live and your class timetable.</p>
+          <p class="hero-sub">CarFun matches BathSpa RAK commuters for affordable, eco-friendly carpooling based on where you live and your class timetable.</p>
           <div class="hero-btns">
-            <button class="btn-primary btn-lg" onclick="showPage('register')">Get Started — it's free</button>
+            <button class="btn-primary btn-lg" onclick="showPage('register')">Get Started, it's free</button>
             <button class="btn-secondary btn-lg" onclick="showPage('rides')">Browse rides</button>
           </div>
           <div class="hero-stats">
-            <div class="stat"><div class="stat-n" id="stat-users">—</div><div class="stat-l">Active members</div></div>
+            <div class="stat"><div class="stat-n" id="stat-users">...</div><div class="stat-l">Active members</div></div>
             <div class="stat"><div class="stat-n">AED 65</div><div class="stat-l">Avg. monthly saving</div></div>
             <div class="stat"><div class="stat-n">4.8★</div><div class="stat-l">Average rating</div></div>
           </div>
@@ -275,9 +276,9 @@
         <div class="section-label">Administration</div>
         <h2>User Management</h2>
         <div class="admin-stats" id="admin-stats">
-          <div class="admin-stat-card"><div class="asc-n" id="asc-total">—</div><div class="asc-l">Total Users</div></div>
-          <div class="admin-stat-card"><div class="asc-n" id="asc-drivers">—</div><div class="asc-l">Drivers</div></div>
-          <div class="admin-stat-card"><div class="asc-n" id="asc-passengers">—</div><div class="asc-l">Passengers</div></div>
+          <div class="admin-stat-card"><div class="asc-n" id="asc-total">...</div><div class="asc-l">Total Users</div></div>
+          <div class="admin-stat-card"><div class="asc-n" id="asc-drivers">...</div><div class="asc-l">Drivers</div></div>
+          <div class="admin-stat-card"><div class="asc-n" id="asc-passengers">...</div><div class="asc-l">Passengers</div></div>
         </div>
         <div class="admin-toolbar">
           <input type="text" id="admin-search" placeholder="Search by name or email…" oninput="filterAdminUsers()" />

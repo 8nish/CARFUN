@@ -1,188 +1,181 @@
 const express = require('express');
-const router = express.Router();
+const ROUTER = express.Router();
 const User = require('../models/User');
 const Ride = require('../models/Ride');
-const { protect, adminOnly } = require('../middleware/auth');
+const { PROTECT, ADMINonly } = require('../middleware/auth');
 
-// ── GET /api/users/profile ────────────────────────────────────────────────
-// Get own profile
-router.get('/profile', protect, (req, res) => {
-  res.json({ user: req.user });
+// GET /api/users/profile — get own profile
+ROUTER.get('/profile', PROTECT, (REQ, RES) => {
+  RES.json({ user: REQ.user });
 });
 
-// ── PUT /api/users/profile ────────────────────────────────────────────────
-// Update own profile
-router.put('/profile', protect, async (req, res) => {
+// PUT /api/users/profile — update own profile
+ROUTER.put('/profile', PROTECT, async (REQ, RES) => {
   try {
-    const allowedFields = [
+    const ALLOWEDfields = [
       'firstName', 'lastName', 'area', 'commuteDays',
       'departureTime', 'returnTime', 'carRegistration',
       'carModel', 'seatsAvailable', 'role', 'profilePicture',
     ];
 
-    const updates = {};
-    allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) updates[field] = req.body[field];
+    const UPDATES = {};
+    ALLOWEDfields.forEach((FIELD) => {
+      if (REQ.body[FIELD] !== undefined) UPDATES[FIELD] = REQ.body[FIELD];
     });
 
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { $set: updates },
+    const USER = await User.findByIdAndUpdate(
+      REQ.user._id,
+      { $set: UPDATES },
       { new: true, runValidators: true }
     );
 
-    res.json({ message: 'Profile updated', user });
-  } catch (err) {
-    if (err.name === 'ValidationError') {
-      return res.status(400).json({ message: Object.values(err.errors)[0].message });
+    RES.json({ message: 'Profile updated', user: USER });
+  } catch (ERR) {
+    if (ERR.name === 'ValidationError') {
+      return RES.status(400).json({ message: Object.values(ERR.errors)[0].message });
     }
-    res.status(500).json({ message: 'Failed to update profile' });
+    RES.status(500).json({ message: 'Failed to update profile' });
   }
 });
 
-// ── PUT /api/users/password ───────────────────────────────────────────────
-// Change password
-router.put('/password', protect, async (req, res) => {
+// PUT /api/users/password — change password
+ROUTER.put('/password', PROTECT, async (REQ, RES) => {
   try {
-    const { currentPassword, newPassword } = req.body;
+    const { currentPassword: CURRENTpassword, newPassword: NEWpassword } = REQ.body;
 
-    const user = await User.findById(req.user._id).select('+password');
+    // need +password since it's excluded from queries by default
+    const USER = await User.findById(REQ.user._id).select('+password');
 
-    if (!(await user.comparePassword(currentPassword))) {
-      return res.status(400).json({ message: 'Current password is incorrect' });
+    if (!(await USER.comparePassword(CURRENTpassword))) {
+      return RES.status(400).json({ message: 'Current password is incorrect' });
     }
 
-    if (newPassword.length < 6) {
-      return res.status(400).json({ message: 'New password must be at least 6 characters' });
+    if (NEWpassword.length < 6) {
+      return RES.status(400).json({ message: 'New password must be at least 6 characters' });
     }
 
-    user.password = newPassword;
-    await user.save();
+    USER.password = NEWpassword;
+    await USER.save();
 
-    res.json({ message: 'Password updated successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to update password' });
+    RES.json({ message: 'Password updated successfully' });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to update password' });
   }
 });
 
-// ── GET /api/users/matches ────────────────────────────────────────────────
-// Find students near you with overlapping schedule
-router.get('/matches', protect, async (req, res) => {
+// GET /api/users/matches — find students near you with an overlapping schedule
+// dhovie maybe add a score/sort here so closer matches show up first -Danish
+ROUTER.get('/matches', PROTECT, async (REQ, RES) => {
   try {
-    const currentUser = req.user;
+    const CURRENTuser = REQ.user;
 
-    // Find users in the same area with overlapping commute days
-    const matches = await User.find({
-      _id: { $ne: currentUser._id },
-      area: currentUser.area,
-      commuteDays: { $in: currentUser.commuteDays },
+    // same area, overlapping commute days, active accounts, complementary role
+    const MATCHES = await User.find({
+      _id: { $ne: CURRENTuser._id },
+      area: CURRENTuser.area,
+      commuteDays: { $in: CURRENTuser.commuteDays },
       isActive: true,
-      role: { $in: currentUser.role === 'passenger' ? ['driver', 'both'] : ['passenger', 'both'] },
+      role: { $in: CURRENTuser.role === 'passenger' ? ['driver', 'both'] : ['passenger', 'both'] },
     })
       .select('firstName lastName area commuteDays departureTime role rating ratingCount carModel seatsAvailable')
       .limit(20);
 
-    res.json({ matches, count: matches.length });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to find matches' });
+    RES.json({ matches: MATCHES, count: MATCHES.length });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to find matches' });
   }
 });
 
-// ── GET /api/users/my-rides ───────────────────────────────────────────────
-// Get rides for current user (as driver or passenger)
-router.get('/my-rides', protect, async (req, res) => {
+// GET /api/users/my-rides — get rides for the current user (as driver or passenger)
+ROUTER.get('/my-rides', PROTECT, async (REQ, RES) => {
   try {
-    const [driverRides, passengerRides] = await Promise.all([
-      // Rides I'm driving
-      Ride.find({ driver: req.user._id })
+    const [DRIVERrides, PASSENGERrides] = await Promise.all([
+      // rides I'm driving
+      Ride.find({ driver: REQ.user._id })
         .populate('requests.passenger', 'firstName lastName area')
         .sort({ date: -1 })
         .limit(20),
 
-      // Rides I've requested
-      Ride.find({ 'requests.passenger': req.user._id })
+      // rides I've requested
+      Ride.find({ 'requests.passenger': REQ.user._id })
         .populate('driver', 'firstName lastName area rating carModel')
         .sort({ date: -1 })
         .limit(20),
     ]);
 
-    res.json({ driverRides, passengerRides });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch your rides' });
+    RES.json({ driverRides: DRIVERrides, passengerRides: PASSENGERrides });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to fetch your rides' });
   }
 });
 
-// ── POST /api/users/:id/rate ──────────────────────────────────────────────
-// Rate a driver after a completed ride
-router.post('/:id/rate', protect, async (req, res) => {
+// POST /api/users/:id/rate — rate a driver after a completed ride
+ROUTER.post('/:id/rate', PROTECT, async (REQ, RES) => {
   try {
-    const { rating } = req.body;
+    const { rating: RATING } = REQ.body;
 
-    if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({ message: 'Rating must be between 1 and 5' });
+    if (!RATING || RATING < 1 || RATING > 5) {
+      return RES.status(400).json({ message: 'Rating must be between 1 and 5' });
     }
 
-    if (req.params.id === req.user._id.toString()) {
-      return res.status(400).json({ message: 'You cannot rate yourself' });
+    if (REQ.params.id === REQ.user._id.toString()) {
+      return RES.status(400).json({ message: 'You cannot rate yourself' });
     }
 
-    const userToRate = await User.findById(req.params.id);
-    if (!userToRate) return res.status(404).json({ message: 'User not found' });
+    const USERtorate = await User.findById(REQ.params.id);
+    if (!USERtorate) return RES.status(404).json({ message: 'User not found' });
 
-    userToRate.addRating(rating);
-    await userToRate.save();
+    USERtorate.addRating(RATING);
+    await USERtorate.save();
 
-    res.json({ message: 'Rating submitted', newRating: userToRate.rating });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to submit rating' });
+    RES.json({ message: 'Rating submitted', newRating: USERtorate.rating });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to submit rating' });
   }
 });
 
-// ── GET /api/users/drivers ────────────────────────────────────────────────
-// List all available drivers (for admin/debug)
-router.get('/drivers', protect, async (req, res) => {
+// GET /api/users/drivers — list all available drivers
+ROUTER.get('/drivers', PROTECT, async (REQ, RES) => {
   try {
-    const { area } = req.query;
-    const filter = { role: { $in: ['driver', 'both'] }, isActive: true };
-    if (area) filter.area = area;
+    const { area: AREA } = REQ.query;
+    const FILTER = { role: { $in: ['driver', 'both'] }, isActive: true };
+    if (AREA) FILTER.area = AREA;
 
-    const drivers = await User.find(filter)
+    const DRIVERS = await User.find(FILTER)
       .select('firstName lastName area commuteDays departureTime rating ratingCount carModel seatsAvailable')
       .sort({ rating: -1 });
 
-    res.json({ drivers, count: drivers.length });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch drivers' });
+    RES.json({ drivers: DRIVERS, count: DRIVERS.length });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to fetch drivers' });
   }
 });
 
-// ── GET /api/users/all ────────────────────────────────────────────────────
-// List all users (admin only)
-router.get('/all', protect, adminOnly, async (req, res) => {
+// GET /api/users/all — list all users (admin only)
+ROUTER.get('/all', PROTECT, ADMINonly, async (REQ, RES) => {
   try {
-    const users = await User.find({})
+    const USERS = await User.find({})
       .select('firstName lastName email role area isActive isAdmin createdAt')
       .sort({ createdAt: -1 });
-    res.json({ users, count: users.length });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch users' });
+    RES.json({ users: USERS, count: USERS.length });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to fetch users' });
   }
 });
 
-// ── DELETE /api/users/:id ─────────────────────────────────────────────────
-// Delete a user (admin only)
-router.delete('/:id', protect, adminOnly, async (req, res) => {
+// DELETE /api/users/:id — delete a user and their rides (admin only)
+ROUTER.delete('/:id', PROTECT, ADMINonly, async (REQ, RES) => {
   try {
-    if (req.params.id === req.user._id.toString()) {
-      return res.status(400).json({ message: 'Cannot delete your own account' });
+    if (REQ.params.id === REQ.user._id.toString()) {
+      return RES.status(400).json({ message: 'Cannot delete your own account' });
     }
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) return res.status(404).json({ message: 'User not found' });
-    await Ride.deleteMany({ driver: req.params.id });
-    res.json({ message: 'User deleted' });
-  } catch (err) {
-    res.status(500).json({ message: 'Failed to delete user' });
+    const USER = await User.findByIdAndDelete(REQ.params.id);
+    if (!USER) return RES.status(404).json({ message: 'User not found' });
+    await Ride.deleteMany({ driver: REQ.params.id });
+    RES.json({ message: 'User deleted' });
+  } catch (ERR) {
+    RES.status(500).json({ message: 'Failed to delete user' });
   }
 });
 
-module.exports = router;
+module.exports = ROUTER;

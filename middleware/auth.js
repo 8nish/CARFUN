@@ -1,75 +1,77 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
-// ── Verify JWT and attach user to request ─────────────────────────────────
-const protect = async (req, res, next) => {
-  let token;
+// checks if the JWT is legit and sticks the user onto the request — core middleware
+const PROTECT = async (REQ, RES, NEXT) => {
+  let TOKEN;
 
-  // Accept token from Authorization header: "Bearer <token>"
-  if (req.headers.authorization?.startsWith('Bearer ')) {
-    token = req.headers.authorization.split(' ')[1];
+  // pull the token from the Authorization header, expecting "Bearer <token>"
+  if (REQ.headers.authorization?.startsWith('Bearer ')) {
+    TOKEN = REQ.headers.authorization.split(' ')[1];
   }
 
-  if (!token) {
-    return res.status(401).json({ message: 'Not authorised — no token provided' });
+  if (!TOKEN) {
+    return RES.status(401).json({ message: 'Not authorised — no token provided' });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = await User.findById(decoded.id).select('-password');
+    const DECODED = jwt.verify(TOKEN, process.env.JWT_SECRET);
+    REQ.user = await User.findById(DECODED.id).select('-password');
 
-    if (!req.user) {
-      return res.status(401).json({ message: 'User no longer exists' });
+    if (!REQ.user) {
+      return RES.status(401).json({ message: 'User no longer exists' });
     }
 
-    if (!req.user.isActive) {
-      return res.status(401).json({ message: 'Account has been deactivated' });
+    if (!REQ.user.isActive) {
+      return RES.status(401).json({ message: 'Account has been deactivated' });
     }
 
-    next();
-  } catch (err) {
-    return res.status(401).json({ message: 'Token invalid or expired' });
+    NEXT();
+  } catch (ERR) {
+    return RES.status(401).json({ message: 'Token invalid or expired' });
   }
 };
 
-// ── Optional auth — attaches user if token present, doesn't fail if not ──
-const optionalAuth = async (req, res, next) => {
-  let token;
+// same deal but chill — if there's no token it just moves on instead of blocking
+// dhovie make sure this doesn't throw when the token is malformed either -Danish
+const OPTIONALauth = async (REQ, RES, NEXT) => {
+  let TOKEN;
 
-  if (req.headers.authorization?.startsWith('Bearer ')) {
-    token = req.headers.authorization.split(' ')[1];
+  if (REQ.headers.authorization?.startsWith('Bearer ')) {
+    TOKEN = REQ.headers.authorization.split(' ')[1];
   }
 
-  if (token) {
+  if (TOKEN) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      req.user = await User.findById(decoded.id).select('-password');
+      const DECODED = jwt.verify(TOKEN, process.env.JWT_SECRET);
+      REQ.user = await User.findById(DECODED.id).select('-password');
     } catch (_) {
-      // ignore invalid token — proceed as unauthenticated
+      // bad or expired token, just treat them as a guest and move on
     }
   }
 
-  next();
+  NEXT();
 };
 
-// ── Restrict to drivers ───────────────────────────────────────────────────
-const driverOnly = (req, res, next) => {
-  if (req.user.role === 'passenger') {
-    return res.status(403).json({ message: 'Only drivers can perform this action' });
+// passengers can't get through here — drivers only
+const DRIVERonly = (REQ, RES, NEXT) => {
+  if (REQ.user.role === 'passenger') {
+    return RES.status(403).json({ message: 'Only drivers can perform this action' });
   }
-  next();
+  NEXT();
 };
 
-// ── Restrict to admins ────────────────────────────────────────────────────
-const adminOnly = (req, res, next) => {
-  if (!req.user.isAdmin) {
-    return res.status(403).json({ message: 'Admin access required' });
+// admin gate, everyone else gets a 403
+// dhovie double check this is applied on all the admin routes -Danish
+const ADMINonly = (REQ, RES, NEXT) => {
+  if (!REQ.user.isAdmin) {
+    return RES.status(403).json({ message: 'Admin access required' });
   }
-  next();
+  NEXT();
 };
 
-// ── Helper: sign a token ──────────────────────────────────────────────────
-const signToken = (id) =>
+// just signs a JWT, 30 day expiry
+const SIGNtoken = (id) =>
   jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
-module.exports = { protect, optionalAuth, driverOnly, adminOnly, signToken };
+module.exports = { PROTECT, OPTIONALauth, DRIVERonly, ADMINonly, SIGNtoken };

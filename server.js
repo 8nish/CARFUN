@@ -14,9 +14,28 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ── MongoDB Connection ──────────────────────────────────────────────────────
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB connected:', process.env.MONGO_URI))
+  .then(async () => {
+    console.log('MongoDB connected:', process.env.MONGO_URI);
+    const User = require('./models/User');
+    const exists = await User.findOne({ email: 'admin@carfun.com' });
+    if (!exists) {
+      await User.create({
+        firstName: 'Admin',
+        lastName: 'CarFun',
+        email: 'admin@carfun.com',
+        password: '123456',
+        role: 'both',
+        isAdmin: true,
+        area: 'Al Nakheel',
+        commuteDays: [],
+        departureTime: '08:00',
+        returnTime: '18:00',
+      });
+      console.log('Admin account created: admin@carfun.com / 123456');
+    }
+  })
   .catch((err) => {
-    console.error('❌ MongoDB connection error:', err.message);
+    console.error('MongoDB connection failed:', err.message);
     process.exit(1);
   });
 
@@ -57,5 +76,5 @@ app.use((err, req, res, next) => {
 // ── Start server ────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`🚗 CarFun running at http://localhost:${PORT}`);
+  console.log(`CarFun running at http://localhost:${PORT}`);
 });
