@@ -11,33 +11,43 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ── MongoDB Connection ──────────────────────────────────────────────────────
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(async () => {
-    console.log('MongoDB connected:', process.env.MONGO_URI);
-    const User = require('./models/User');
-    const exists = await User.findOne({ email: 'admin@carfun.com' });
-    if (!exists) {
-      await User.create({
-        firstName: 'Admin',
-        lastName: 'CarFun',
-        email: 'admin@carfun.com',
-        password: '123456',
-        role: 'both',
-        isAdmin: true,
-        area: 'Al Nakheel',
-        commuteDays: [],
-        departureTime: '08:00',
-        returnTime: '18:00',
-      });
-      console.log('Admin account created: admin@carfun.com / 123456');
-    }
-  })
-  .catch((err) => {
+// ── MongoDB Connection (cached for serverless) ──────────────────────────────
+let isConnected = false;
+
+async function connectDB() {
+  if (isConnected) return;
+  await mongoose.connect(process.env.MONGO_URI);
+  isConnected = true;
+  console.log('MongoDB connected');
+
+  const User = require('./models/User');
+  const exists = await User.findOne({ email: 'admin@carfun.com' });
+  if (!exists) {
+    await User.create({
+      firstName: 'Admin',
+      lastName: 'CarFun',
+      email: 'admin@carfun.com',
+      password: '123456',
+      role: 'both',
+      isAdmin: true,
+      area: 'Al Nakheel',
+      commuteDays: [],
+      departureTime: '08:00',
+      returnTime: '18:00',
+    });
+    console.log('Admin account created: admin@carfun.com / 123456');
+  }
+}
+
+app.use(async (req, res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
     console.error('MongoDB connection failed:', err.message);
-    process.exit(1);
-  });
+    res.status(500).json({ message: 'Database connection failed' });
+  }
+});
 
 // ── API Routes ──────────────────────────────────────────────────────────────
 app.use('/api/auth',     require('./routes/auth'));
@@ -73,8 +83,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: 'Server error', error: err.message });
 });
 
-// ── Start server ────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`CarFun running at http://localhost:${PORT}`);
-});
+// ── Local dev server ─────────────────────────────────────────────────────────
+if (require.main === module) {
+  const PORT = process.env.PORT || 3000;
+  connectDB().then(() => {
+    app.listen(PORT, () => console.log(`CarFun running at http://localhost:${PORT}`));
+  });
+}
+
+module.exports = app;
